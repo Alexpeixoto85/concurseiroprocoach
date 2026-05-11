@@ -2126,10 +2126,86 @@ async function renderStats(){results=await dbAll('resultados');const tQ=results.
 async function renderRank(mode='g'){results=await dbAll('resultados');let list;if(mode==='r'){list=[...results].sort((a,b)=>b.date-a.date).slice(0,10);}else{const m={};results.forEach(r=>{if(!m[r.titulo]||r.score>m[r.titulo].score)m[r.titulo]=r;});list=Object.values(m).sort((a,b)=>b.score-a.score);}const el=document.getElementById('rank-list');if(!list.length){el.innerHTML='<div class="empty"><div class="eic">🏆</div><div class="et">Sem resultados ainda</div></div>';return;}const pos=['🥇','🥈','🥉'],cls=['cgold','','c-bronze'];el.innerHTML=list.map((r,i)=>{const p=Math.round(r.score);return`<div class="lrow"><span style="font-family:'Sora',sans-serif;font-weight:800;font-size:15px;min-width:22px;text-align:center;${i<3?'color:'+['#f59e0b','#94a3b8','#b45309'][i]:''}">${pos[i]||i+1}</span><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.titulo}</div><div style="font-size:11px;color:var(--muted)">${r.materia} · ${new Date(r.date).toLocaleDateString('pt-BR')}</div></div><span style="font-family:'Sora',sans-serif;font-weight:800;font-size:15px;color:var(--ac)">${p}%</span></div>`;}).join('');}
 function rankTab(m,el){document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');renderRank(m);}
 
-async function renderCad(){const cads=await dbAll('cadernos');const el=document.getElementById('cad-list');if(!cads.length){el.innerHTML='<div class="empty"><div class="eic">📚</div><div class="et">Nenhum caderno</div><button class="btn bp" style="margin-top:11px" onclick="createCad()">+ Criar</button></div>';return;}el.innerHTML='<div class="ga">'+cads.map(c=>`<div class="card"><div style="font-size:24px;margin-bottom:7px">📚</div><div style="font-family:'Sora',sans-serif;font-weight:700;margin-bottom:3px">${c.nome}</div><div style="font-size:12px;color:var(--muted);margin-bottom:11px">${(c.questoes||[]).length} questão(ões)</div><div style="display:flex;gap:7px"><button class="btn bo bsm bfull" onclick="viewCad(${c.id})">Ver</button><button class="btn bd bsm" onclick="delCad(${c.id})">🗑</button></div></div>`).join('')+'</div>';}
-async function createCad(){showModal('Novo Caderno',`<div class="fg"><label class="fl">Nome</label><input id="cadn" class="fi" placeholder="Ex: Revisão Final"></div>`,[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Criar',c:'bp',fn:async()=>{const n=document.getElementById('cadn').value.trim();if(!n){toast('Informe um nome','err');return;}await dbAdd('cadernos',{nome:n,questoes:[],criadoEm:Date.now()});renderCad();toast('✅ Caderno criado!','ok');}}]);}
-async function delCad(id){await dbDel('cadernos',id);renderCad();toast('Removido');}
-async function viewCad(id){const c=await dbGet('cadernos',id);const qs=c.questoes||[];showModal(c.nome,qs.length?qs.map(q=>`<div style="padding:7px;margin-bottom:5px;background:var(--bg);border-radius:6px;font-size:12px"><strong>Q${q.numero}:</strong> ${q.enunciado?.substring(0,100)}…</div>`).join(''):'<div style="color:var(--muted)">Caderno vazio.</div>',[{l:'Fechar',c:'bo',fn:()=>{}}]);}
+async function renderCad(){const cads=await dbAll('cadernos');const el=document.getElementById('cad-list');if(!cads.length){el.innerHTML='<div class="empty"><div class="eic">📚</div><div class="et">Nenhum caderno</div><button class="btn bp" style="margin-top:11px" onclick="createCad()">+ Criar</button></div>';return;}el.innerHTML='<div class="ga">'+cads.map(c=>`<div class="card"><div style="font-size:24px;margin-bottom:7px">📚</div><div style="font-family:'Sora',sans-serif;font-weight:700;margin-bottom:3px">${c.nome}</div><div style="font-size:12px;color:var(--muted);margin-bottom:11px">${(c.questoes||[]).length} questões · ${c.notes ? 'Com notas' : 'Sem notas'}</div><div style="display:flex;gap:7px"><button class="btn bo bsm bfull" onclick="viewCad(${c.id})">Ver / Editar</button><button class="btn bd bsm" onclick="delCad(${c.id})">🗑</button></div></div>`).join('')+'</div>';}
+async function createCad(){showModal('Novo Caderno',`<div class="fg"><label class="fl">Nome</label><input id="cadn" class="fi" placeholder="Ex: Revisão Final"></div>`,[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Criar',c:'bp',fn:async()=>{const n=document.getElementById('cadn').value.trim();if(!n){toast('Informe um nome','err');return;}await dbAdd('cadernos',{nome:n,questoes:[],notes:'',criadoEm:Date.now()});renderCad();toast('✅ Caderno criado!','ok');}}]);}
+async function delCad(id){if(confirm('Excluir este caderno?')){await dbDel('cadernos',id);renderCad();toast('Removido');}}
+async function viewCad(id){
+  const c=await dbGet('cadernos',id);
+  const qs=c.questoes||[];
+  const body = `
+    <div class="fg">
+      <label class="fl">Anotações do Caderno</label>
+      <textarea id="cad-notes" class="fi" style="min-height:150px;font-size:13px" placeholder="Escreva suas observações, resumos ou dicas aqui...">${c.notes||''}</textarea>
+    </div>
+    <div style="margin-top:15px">
+      <label class="fl">Questões Salvas (${qs.length})</label>
+      <div style="max-height:250px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--rsm);padding:8px;background:var(--surf2)">
+        ${qs.length?qs.map((q,i)=>`<div style="padding:10px;margin-bottom:8px;background:var(--surf);border:1px solid var(--border);border-radius:6px;font-size:12px;box-shadow:var(--ss)">
+          <div style="font-weight:700;margin-bottom:4px;color:var(--ac)">Questão ${i+1} (${q._titulo||'Simulado'})</div>
+          <div style="line-height:1.5">${q.enunciado}</div>
+          <div style="margin-top:6px;font-weight:700;color:var(--ok)">Gabarito: ${q.correta}</div>
+        </div>`).join(''):'<div style="color:var(--muted);text-align:center;padding:20px">Nenhuma questão salva.</div>'}
+      </div>
+    </div>
+  `;
+  showModal(c.nome, body, [
+    {l:'🗑 Limpar Questões',c:'bd bsm',fn:async()=>{if(confirm('Limpar todas as questões deste caderno?')){c.questoes=[];await dbPut('cadernos',c);viewCad(id);}}},
+    {l:'📥 Baixar PDF',c:'bo bsm',fn:()=>downloadCadPDF(id)},
+    {l:'Cancelar',c:'bo bsm',fn:()=>{}},
+    {l:'💾 Salvar Alterações',c:'bp bsm',fn:async()=>{
+      c.notes = document.getElementById('cad-notes').value;
+      await dbPut('cadernos',c);
+      renderCad();
+      toast('✅ Caderno salvo!','ok');
+    }}
+  ]);
+}
+async function downloadCadPDF(id){
+  const c=await dbGet('cadernos',id);
+  const qs=c.questoes||[];
+  let html = `
+    <html>
+    <head>
+      <title>${c.nome}</title>
+      <style>
+        body { font-family: sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+        h1 { color: #6c5ce7; border-bottom: 2px solid #6c5ce7; padding-bottom: 10px; }
+        h2 { color: #4a4f6a; margin-top: 30px; border-bottom: 1px solid #eee; }
+        .notes { background: #f7f8fc; padding: 20px; border-radius: 8px; white-space: pre-wrap; margin-bottom: 30px; border: 1px solid #e3e6f0; }
+        .q-card { margin-bottom: 20px; padding: 15px; border: 1px solid #e3e6f0; border-radius: 8px; page-break-inside: avoid; }
+        .q-num { font-weight: bold; color: #6c5ce7; margin-bottom: 8px; }
+        .q-ans { font-weight: bold; color: #10b981; margin-top: 10px; }
+        .footer { margin-top: 50px; font-size: 12px; color: #8b90aa; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
+      </style>
+    </head>
+    <body>
+      <h1>${c.nome}</h1>
+      <p>Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
+      
+      <h2>📝 Anotações</h2>
+      <div class="notes">${c.notes || 'Nenhuma anotação.'}</div>
+      
+      <h2>🎯 Questões Salvas (${qs.length})</h2>
+      ${qs.map((q, i) => `
+        <div class="q-card">
+          <div class="q-num">Questão ${i+1} - ${q._titulo || 'Simulado'}</div>
+          <div>${q.enunciado}</div>
+          <div class="q-ans">Gabarito: ${q.correta}</div>
+        </div>
+      `).join('')}
+      
+      <div class="footer">ConcursoPro - Seu aliado na aprovação</div>
+    </body>
+    </html>
+  `;
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => {
+    win.print();
+    // win.close(); // Opcional: fechar após imprimir
+  }, 500);
+}
 async function saveQCard(){const cads=await dbAll('cadernos');if(!cads.length){toast('Crie um caderno primeiro','err');return;}showModal('Salvar no Caderno',`<div class="fg"><label class="fl">Caderno</label><select id="selcad" class="fi">${cads.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('')}</select></div>`,[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Salvar',c:'bp',fn:async()=>{const id=+document.getElementById('selcad').value;const c=await dbGet('cadernos',id);const q=examSim.questoes[qi];if(!c.questoes)c.questoes=[];if(!c.questoes.some(x=>x.numero===q.numero&&x.enunciado===q.enunciado)){c.questoes.push({...q,_titulo:examSim.titulo});await dbPut('cadernos',c);toast('🔖 Questão salva!','ok');}else toast('Já está neste caderno','err');}}]);}
 
 // ══════════════════════════════════════════════════════════
