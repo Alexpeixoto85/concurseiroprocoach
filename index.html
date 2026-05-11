@@ -406,6 +406,143 @@ textarea.fi{resize:vertical;min-height:70px;}
 }
 @media(max-width:380px){.g3{grid-template-columns:1fr;}.extop .btn.bsm:not(:last-child):not(:nth-last-child(2)){display:none;}}
 </style>
+<script src="https://www.youtube.com/iframe_api">
+// ══════════════════════════════════════════════════════════
+//  BACKUP & VIDEO PROGRESS IMPROVEMENTS
+// ══════════════════════════════════════════════════════════
+async function exportBackup() {
+  try {
+    const backup = {};
+    const stores = ['simulados', 'resultados', 'cadernos', 'videoaulas', 'concursos', 'taf', 'coachlog', 'flashdecks', 'user', 'checklist'];
+    for (const store of stores) {
+      backup[store] = await dbAll(store);
+    }
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_concursopro_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('✅ Backup exportado com sucesso!', 'ok');
+  } catch (err) {
+    toast('❌ Erro ao exportar: ' + err.message, 'err');
+  }
+}
+
+async function importBackup(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  showModal('Importar Backup', 'Isso irá mesclar os dados do backup com os atuais. Deseja continuar?', [
+    {l: 'Cancelar', c: 'bo', fn: () => {}},
+    {l: 'Importar', c: 'bp', fn: async () => {
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const backup = JSON.parse(ev.target.result);
+          for (const store in backup) {
+            const data = backup[store];
+            if (Array.isArray(data)) {
+              for (const item of data) {
+                await dbPut(store, item);
+              }
+            } else if (data && typeof data === 'object' && data.key) {
+              await dbPut(store, data);
+            }
+          }
+          toast('✅ Backup importado! Recarregando...', 'ok');
+          setTimeout(() => location.reload(), 1500);
+        } catch (err) {
+          toast('❌ Erro ao importar backup: ' + err.message, 'err');
+        }
+      };
+      reader.readAsText(file);
+    }}
+  ]);
+  e.target.value = '';
+}
+
+let ytPlayer = null;
+let progressInterval = null;
+
+function onYouTubeIframeAPIReady() {
+  console.log('YouTube API Ready');
+}
+
+async function playVid(id) {
+  const v = await dbGet('videoaulas', id);
+  if (!v) return;
+  currentVidId = id;
+  document.getElementById('vidtitle').textContent = v.titulo;
+  document.getElementById('vidmeta').textContent = (v.canal ? v.canal + ' · ' : '') + (v.materia ? v.materia : '') + (v.duracao ? ' · ' + v.duracao + 'min' : '');
+  
+  const btn = document.getElementById('vidbtnmark');
+  if (v.done) { btn.textContent = '↩ Desmarcar concluída'; btn.className = 'vidbtnmark bo'; }
+  else { btn.textContent = '✓ Marcar como assistida'; btn.className = 'vidbtnmark bok'; }
+
+  const videoId = getYTId(v.url);
+  const startSeconds = v.lastTime || 0;
+
+  document.getElementById('vidov').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  if (ytPlayer && ytPlayer.loadVideoById) {
+    ytPlayer.loadVideoById({
+      videoId: videoId,
+      startSeconds: startSeconds
+    });
+  } else {
+    // Limpa o container antes de criar o player
+    document.getElementById('vidframe').innerHTML = '';
+    ytPlayer = new YT.Player('vidframe', {
+      height: '100%',
+      width: '100%',
+      videoId: videoId,
+      playerVars: {
+        'autoplay': 1,
+        'rel': 0,
+        'start': startSeconds
+      },
+      events: {
+        'onStateChange': (event) => {
+          if (event.data == YT.PlayerState.PLAYING) startProgressTracking();
+          else stopProgressTracking();
+        }
+      }
+    });
+  }
+}
+
+function startProgressTracking() {
+  if (progressInterval) return;
+  progressInterval = setInterval(async () => {
+    if (ytPlayer && ytPlayer.getCurrentTime && currentVidId) {
+      const currentTime = Math.floor(ytPlayer.getCurrentTime());
+      if (currentTime > 0) {
+        const v = await dbGet('videoaulas', currentVidId);
+        if (v) {
+          v.lastTime = currentTime;
+          await dbPut('videoaulas', v);
+        }
+      }
+    }
+  }, 5000);
+}
+
+function stopProgressTracking() {
+  clearInterval(progressInterval);
+  progressInterval = null;
+}
+
+// Sobrescrever a função closeVid original
+const originalCloseVid = closeVid;
+closeVid = function() {
+  stopProgressTracking();
+  if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+  originalCloseVid();
+};
+
+</script>
 </head>
 <body>
 <div id="app">
@@ -446,6 +583,7 @@ textarea.fi{resize:vertical;min-height:70px;}
     <div class="nlbl">Físico & Prova</div>
     <div class="ni" data-p="taf"><span class="ni-ic">🏃</span>TAF — Treinamento</div>
     <div class="ni" data-p="checklist"><span class="ni-ic">✅</span>Checklist da Prova</div>
+    <div class="ni" data-p="configuracoes"><span class="ni-ic">⚙️</span>Configurações</div>
     <div class="nlbl">Análise</div>
     <div class="ni" data-p="estatisticas"><span class="ni-ic">📈</span>Estatísticas</div>
     <div class="ni" data-p="ranking"><span class="ni-ic">🏆</span>Rankings</div>
@@ -475,6 +613,23 @@ textarea.fi{resize:vertical;min-height:70px;}
     <div class="notif-body" id="notif-body"></div>
   </div>
   <div id="content">
+
+
+<!-- ══════════ CONFIGURAÇÕES ══════════ -->
+<div class="panel" id="panel-configuracoes">
+  <div class="sh">
+    <div><div class="stitle">⚙️ Configurações e Backup</div><div class="ssub">Gerencie seus dados e preferências</div></div>
+  </div>
+  <div class="card">
+    <div style="font-family:'Sora',sans-serif;font-weight:700;margin-bottom:12px">💾 Backup do Sistema</div>
+    <p style="font-size:13px;color:var(--txt2);margin-bottom:16px">Exporte todos os seus dados (concursos, videoaulas, simulados, progresso, etc.) para um arquivo de backup ou restaure um backup anterior.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn bp" onclick="exportBackup()">📤 Exportar Backup</button>
+      <button class="btn bo" onclick="document.getElementById('backup-fi').click()">📥 Importar Backup</button>
+      <input type="file" id="backup-fi" accept=".json" style="display:none" onchange="importBackup(event)">
+    </div>
+  </div>
+</div>
 
 <!-- ══════════ DASHBOARD ══════════ -->
 <div class="panel active" id="panel-dashboard">
@@ -725,7 +880,7 @@ textarea.fi{resize:vertical;min-height:70px;}
       <button class="vidbtncinema" onclick="toggleCinema()" id="btnCinema" title="Modo Cinema">🎬 Cinema</button>
       <button class="vidbtnclose" onclick="closeVid()">✕</button>
     </div>
-    <div class="vidframe"><iframe id="vidframe" src="" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>
+    <div class="vidframe"><div id="vidframe"></div><!-- <iframe id="vidframe" src="" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen>--></div>
     <div class="vidfoot">
       <div class="vidmeta" id="vidmeta"></div>
       <button class="vidbtnmark bok" id="vidbtnmark" onclick="markVidDone()">✓ Marcar como assistida</button>
@@ -822,7 +977,7 @@ let qDF='',vaDF=''; // filtros ativos
 const COLORS=['#6c5ce7','#10b981','#ef4444','#f59e0b','#3b82f6','#ec4899','#8b5cf6','#06b6d4'];
 const ICONS=['📖','⚖️','🏛️','📜','🔬','🧮','📝','🎓','🔎','📑'];
 const DS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-const PTITLES={dashboard:'Dashboard',coach:'Coach Diário',cronograma:'Cronograma de Estudos',concursos:'Meus Concursos',videoaulas:'Videoaulas',simulados:'Simulados',questoes:'Questões',flashcards:'Flashcards',taf:'TAF — Treinamento Físico',checklist:'Checklist da Prova',estatisticas:'Estatísticas',ranking:'Rankings',import:'Importar Simulado',cadernos:'Cadernos'};
+const PTITLES={dashboard:'Dashboard',coach:'Coach Diário',cronograma:'Cronograma de Estudos',concursos:'Meus Concursos',videoaulas:'Videoaulas',simulados:'Simulados',questoes:'Questões',flashcards:'Flashcards',taf:'TAF — Treinamento Físico',checklist:'Checklist da Prova',estatisticas:'Estatísticas',configuracoes:'Configurações',ranking:'Rankings',import:'Importar Simulado',cadernos:'Cadernos'};
 const today=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());};
 const toISO=d=>d.toISOString().split('T')[0];
 const fmtBR=s=>s?new Date(s+'T12:00:00').toLocaleDateString('pt-BR'):'';
@@ -841,7 +996,7 @@ function go(id){
   const content=document.getElementById('content');
   if(content)content.scrollTop=0;
   closeSB();
-  ({dashboard:renderDash,coach:renderCoach,cronograma:renderCronograma,concursos:renderCC,videoaulas:renderVA,simulados:renderSims,questoes:renderQ,flashcards:renderFC,taf:renderTAF,checklist:renderCK,estatisticas:renderStats,ranking:()=>renderRank('g'),import:renderImpList,cadernos:renderCad})[id]?.();
+  ({dashboard:renderDash,coach:renderCoach,cronograma:renderCronograma,concursos:renderCC,videoaulas:renderVA,simulados:renderSims,questoes:renderQ,flashcards:renderFC,taf:renderTAF,checklist:renderCK,estatisticas:renderStats,ranking:()=>renderRank('g'),configuracoes:()=>{},import:renderImpList,cadernos:renderCad})[id]?.();
 }
 document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>go(el.dataset.p)));
 document.getElementById('mbtn').addEventListener('click',()=>{document.getElementById('sb').classList.toggle('open');document.getElementById('sbo').classList.toggle('open');});
@@ -2229,6 +2384,142 @@ function downloadSimTemplate(){
   const blob=new Blob([JSON.stringify(modelo,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='modelo_simulado.json';a.click();
 }
+
+// ══════════════════════════════════════════════════════════
+//  BACKUP & VIDEO PROGRESS IMPROVEMENTS
+// ══════════════════════════════════════════════════════════
+async function exportBackup() {
+  try {
+    const backup = {};
+    const stores = ['simulados', 'resultados', 'cadernos', 'videoaulas', 'concursos', 'taf', 'coachlog', 'flashdecks', 'user', 'checklist'];
+    for (const store of stores) {
+      backup[store] = await dbAll(store);
+    }
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_concursopro_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('✅ Backup exportado com sucesso!', 'ok');
+  } catch (err) {
+    toast('❌ Erro ao exportar: ' + err.message, 'err');
+  }
+}
+
+async function importBackup(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  showModal('Importar Backup', 'Isso irá mesclar os dados do backup com os atuais. Deseja continuar?', [
+    {l: 'Cancelar', c: 'bo', fn: () => {}},
+    {l: 'Importar', c: 'bp', fn: async () => {
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const backup = JSON.parse(ev.target.result);
+          for (const store in backup) {
+            const data = backup[store];
+            if (Array.isArray(data)) {
+              for (const item of data) {
+                await dbPut(store, item);
+              }
+            } else if (data && typeof data === 'object' && data.key) {
+              await dbPut(store, data);
+            }
+          }
+          toast('✅ Backup importado! Recarregando...', 'ok');
+          setTimeout(() => location.reload(), 1500);
+        } catch (err) {
+          toast('❌ Erro ao importar backup: ' + err.message, 'err');
+        }
+      };
+      reader.readAsText(file);
+    }}
+  ]);
+  e.target.value = '';
+}
+
+let ytPlayer = null;
+let progressInterval = null;
+
+function onYouTubeIframeAPIReady() {
+  console.log('YouTube API Ready');
+}
+
+async function playVid(id) {
+  const v = await dbGet('videoaulas', id);
+  if (!v) return;
+  currentVidId = id;
+  document.getElementById('vidtitle').textContent = v.titulo;
+  document.getElementById('vidmeta').textContent = (v.canal ? v.canal + ' · ' : '') + (v.materia ? v.materia : '') + (v.duracao ? ' · ' + v.duracao + 'min' : '');
+  
+  const btn = document.getElementById('vidbtnmark');
+  if (v.done) { btn.textContent = '↩ Desmarcar concluída'; btn.className = 'vidbtnmark bo'; }
+  else { btn.textContent = '✓ Marcar como assistida'; btn.className = 'vidbtnmark bok'; }
+
+  const videoId = getYTId(v.url);
+  const startSeconds = v.lastTime || 0;
+
+  document.getElementById('vidov').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  if (ytPlayer && ytPlayer.loadVideoById) {
+    ytPlayer.loadVideoById({
+      videoId: videoId,
+      startSeconds: startSeconds
+    });
+  } else {
+    // Limpa o container antes de criar o player
+    document.getElementById('vidframe').innerHTML = '';
+    ytPlayer = new YT.Player('vidframe', {
+      height: '100%',
+      width: '100%',
+      videoId: videoId,
+      playerVars: {
+        'autoplay': 1,
+        'rel': 0,
+        'start': startSeconds
+      },
+      events: {
+        'onStateChange': (event) => {
+          if (event.data == YT.PlayerState.PLAYING) startProgressTracking();
+          else stopProgressTracking();
+        }
+      }
+    });
+  }
+}
+
+function startProgressTracking() {
+  if (progressInterval) return;
+  progressInterval = setInterval(async () => {
+    if (ytPlayer && ytPlayer.getCurrentTime && currentVidId) {
+      const currentTime = Math.floor(ytPlayer.getCurrentTime());
+      if (currentTime > 0) {
+        const v = await dbGet('videoaulas', currentVidId);
+        if (v) {
+          v.lastTime = currentTime;
+          await dbPut('videoaulas', v);
+        }
+      }
+    }
+  }, 5000);
+}
+
+function stopProgressTracking() {
+  clearInterval(progressInterval);
+  progressInterval = null;
+}
+
+// Sobrescrever a função closeVid original
+const originalCloseVid = closeVid;
+closeVid = function() {
+  stopProgressTracking();
+  if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+  originalCloseVid();
+};
+
 </script>
 </body>
 </html>
