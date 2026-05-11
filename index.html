@@ -2,10 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#6c5ce7">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>ConcursoPro</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -20,24 +17,20 @@
   --warn:#f59e0b;--warn-lt:#fef3c7;
   --info:#3b82f6;--info-lt:#dbeafe;
   --taf:#0ea5e9;--taf-lt:#e0f2fe;
-  --r:14px;--rsm:10px;--sw:248px;--th:60px;
-  --ss:0 1px 4px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
-  --sh:0 4px 16px rgba(0,0,0,.08);--sl:0 12px 40px rgba(0,0,0,.15);
-  --safe-top:env(safe-area-inset-top,0px);
-  --safe-bot:env(safe-area-inset-bottom,0px);
-  --safe-left:env(safe-area-inset-left,0px);
-  --safe-right:env(safe-area-inset-right,0px);
+  --r:12px;--rsm:8px;--sw:236px;--th:58px;
+  --ss:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
+  --sh:0 4px 16px rgba(0,0,0,.08);--sl:0 12px 40px rgba(0,0,0,.13);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-html{font-size:16px;-webkit-text-size-adjust:100%;height:100%;}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;min-height:-webkit-fill-available;display:flex;overflow:hidden;height:100vh;height:-webkit-fill-available;}
+html{font-size:16px;-webkit-text-size-adjust:100%;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;overflow:hidden;height:100vh;}
 button,input,select,textarea{font-family:inherit;}
 button{cursor:pointer;}
-#app{display:flex;width:100%;height:100vh;height:-webkit-fill-available;overflow:hidden;}
+#app{display:flex;width:100%;height:100vh;overflow:hidden;}
 
 /* SIDEBAR */
-#sb{width:var(--sw);background:var(--surf);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;height:-webkit-fill-available;overflow-y:auto;flex-shrink:0;z-index:200;transition:transform .3s cubic-bezier(.4,0,.2,1);}
-#sbo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:199;}
+#sb{width:var(--sw);background:var(--surf);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0;z-index:200;transition:transform .3s cubic-bezier(.4,0,.2,1);}
+#sbo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199;}
 .logo{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
 .logo-ic{width:34px;height:34px;background:linear-gradient(135deg,var(--ac),#a78bfa);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;box-shadow:0 3px 10px var(--glow);}
 .logo-txt{font-family:'Sora',sans-serif;font-weight:800;font-size:12.5px;line-height:1.25;}
@@ -59,17 +52,17 @@ button{cursor:pointer;}
 .ni-b{margin-left:auto;font-size:9px;padding:2px 6px;border-radius:20px;background:linear-gradient(90deg,var(--gold),#fb923c);color:#fff;font-weight:700;flex-shrink:0;}
 
 /* MAIN */
-#main{flex:1;display:flex;flex-direction:column;height:100vh;height:-webkit-fill-available;overflow:hidden;min-width:0;}
-#topbar{height:var(--th);background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:11px;flex-shrink:0;box-shadow:var(--ss);padding-left:calc(20px + var(--safe-left));padding-right:calc(20px + var(--safe-right));}
-@media(min-width:901px){.mbtn{display:none!important;}}
+#main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;min-width:0;}
+#topbar{height:var(--th);background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:11px;flex-shrink:0;box-shadow:var(--ss);}
+.mbtn{display:none;background:none;border:none;font-size:19px;color:var(--txt2);padding:4px;border-radius:6px;flex-shrink:0;}
 .tbt{font-family:'Sora',sans-serif;font-weight:700;font-size:15px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tbr{display:flex;align-items:center;gap:8px;}
 .tbell{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;color:var(--txt2);}
 .tbell:hover{background:var(--surf2);}
 .tbav{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--ac),#a78bfa);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;cursor:pointer;}
-#content{flex:1;overflow-y:auto;padding:16px;height:calc(100vh - var(--th));-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(16px + var(--safe-bot));padding-left:calc(16px + var(--safe-left));padding-right:calc(16px + var(--safe-right));}
+#content{flex:1;overflow-y:auto;padding:22px;height:calc(100vh - var(--th));-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 .panel{display:none;animation:fu .25s ease;}
-.panel.active{display:block;min-height:100%;padding-bottom:24px;}
+.panel.active{display:block;min-height:100%;padding-bottom:32px;}
 @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 /* ATOMS */
@@ -88,18 +81,19 @@ button{cursor:pointer;}
 .card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:17px;box-shadow:var(--ss);}
 .chov{transition:all .18s;cursor:pointer;}
 .chov:hover{border-color:var(--ac);box-shadow:0 5px 20px var(--glow);transform:translateY(-2px);}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
-.ga{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
-.sh{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
-.stitle{font-family:'Sora',sans-serif;font-weight:700;font-size:16px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;}
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;}
+.ga{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:13px;}
+.sh{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:17px;flex-wrap:wrap;}
+.stitle{font-family:'Sora',sans-serif;font-weight:700;font-size:17px;}
 .ssub{font-size:12px;color:var(--muted);margin-top:2px;}
-.shr{display:flex;gap:7px;flex-wrap:wrap;flex-shrink:0;align-items:center;}
-.scard{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:14px 15px;box-shadow:var(--ss);min-width:0;overflow:hidden;}
-.slbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sval{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.schg{font-size:11px;margin-top:3px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.shr{display:flex;gap:7px;flex-wrap:wrap;flex-shrink:0;}
+.scard{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:15px 17px;box-shadow:var(--ss);}
+.slbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:4px;}
+.sval{font-family:'Sora',sans-serif;font-size:24px;font-weight:800;}
+.schg{font-size:11px;margin-top:3px;font-weight:500;}
 .cok{color:var(--ok);}.cerr{color:var(--err);}.cac{color:var(--ac);}.cgold{color:var(--gold);}
+.tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;}
 .tac{background:var(--ac-lt);color:var(--ac);}
 .tok{background:var(--ok-lt);color:var(--ok);}
 .terr{background:var(--err-lt);color:var(--err);}
@@ -139,55 +133,19 @@ textarea.fi{resize:vertical;min-height:70px;}
 .codeblock{background:var(--bg);border:1px solid var(--border);border-radius:var(--rsm);padding:12px;font-family:monospace;font-size:11.5px;color:var(--txt2);line-height:1.8;overflow-x:auto;}
 
 /* MODAL */
-#mol{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;align-items:flex-end;justify-content:center;padding:0;}
+#mol{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:600;align-items:center;justify-content:center;padding:14px;}
 #mol.open{display:flex;}
-.modal{background:var(--surf);border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;padding:22px 18px;padding-bottom:calc(22px + var(--safe-bot));width:100%;max-width:560px;max-height:92vh;overflow-y:auto;box-shadow:var(--sl);animation:slideUp .25s ease;}
-@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
-@media(min-width:600px){
-  #mol{align-items:center;padding:16px;}
-  .modal{border-radius:var(--r);padding:22px;padding-bottom:22px;max-height:88vh;}
-}
+.modal{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:22px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--sl);animation:fu .2s ease;}
 .mtitle{font-family:'Sora',sans-serif;font-weight:700;font-size:16px;margin-bottom:8px;}
 .mbody{font-size:13px;color:var(--txt2);line-height:1.7;margin-bottom:16px;}
 .mact{display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap;}
 
 /* TOAST */
-#tbox{position:fixed;bottom:calc(16px + var(--safe-bot));right:16px;z-index:700;display:flex;flex-direction:column;gap:5px;pointer-events:none;max-width:calc(100vw - 32px);}
-.toast{background:var(--surf);border:1px solid var(--border);border-radius:var(--rsm);padding:10px 14px;font-size:13px;font-weight:500;box-shadow:var(--sl);animation:tIn .22s ease;display:flex;align-items:center;gap:7px;max-width:300px;pointer-events:auto;}
+#tbox{position:fixed;bottom:16px;right:16px;z-index:700;display:flex;flex-direction:column;gap:5px;pointer-events:none;}
+.toast{background:var(--surf);border:1px solid var(--border);border-radius:var(--rsm);padding:10px 14px;font-size:13px;font-weight:500;box-shadow:var(--sl);animation:tIn .22s ease;display:flex;align-items:center;gap:7px;max-width:290px;pointer-events:auto;}
 .toast.ok{border-left:3px solid var(--ok);}.toast.err{border-left:3px solid var(--err);}.toast.info{border-left:3px solid var(--ac);}
 @keyframes tIn{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
-/* ── MOBILE BOTTOM NAV ── */
-#mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surf);border-top:1px solid var(--border);z-index:195;flex-direction:row;justify-content:space-around;align-items:center;padding-bottom:var(--safe-bot);box-shadow:0 -2px 16px rgba(0,0,0,.08);}
-.mnav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:10px;font-weight:600;color:var(--muted);cursor:pointer;min-width:48px;flex:1;transition:color .14s;}
-.mnav-item.active{color:var(--ac);}
-.mnav-ic{font-size:20px;line-height:1;}
-@media(max-width:600px){
-  #mobile-nav{display:flex;}
-  #content{padding-bottom:calc(72px + var(--safe-bot));}
-  #tbox{bottom:calc(72px + var(--safe-bot) + 8px);}
-}
-/* ── CARD MIN WIDTH FIX ── */
-.card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:14px;box-shadow:var(--ss);min-width:0;overflow:hidden;}
-/* ── CONCURSO TAG OVERFLOW FIX ── */
-.cc .ccb > div{min-width:0;}
-.cc .ccb .flex-wrap{min-width:0;overflow:hidden;}
-/* ── INPUT FIELD MOBILE FIX ── */
-.fi{font-size:16px;} /* Prevents iOS zoom on focus */
-.sbar{font-size:16px;}
-/* ── MBTN BIGGER TAP TARGET ── */
-.mbtn{width:40px;height:40px;display:none;align-items:center;justify-content:center;background:none;border:none;font-size:20px;color:var(--txt2);border-radius:8px;flex-shrink:0;}
-/* ── CHIPS SCROLL ── */
-.cr{display:flex;flex-wrap:nowrap;gap:6px;margin-bottom:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
-.cr::-webkit-scrollbar{height:2px;}
-/* ── WEEK PLAN SCROLL ── */
-.week-plan{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch;}
-.wday{min-width:110px;flex-shrink:0;}
-/* ── IMPORT BOX MOBILE FIX ── */
-.import-cc-box{margin-bottom:12px;}
-/* ── TAGS OVERFLOW FIX ── */
-.tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:3px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
-
-::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 ::-webkit-scrollbar-thumb:hover{background:var(--ac);}
@@ -248,13 +206,13 @@ textarea.fi{resize:vertical;min-height:70px;}
 .va.done{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok-lt);}
 
 /* CONCURSOS */
-.cc{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--ss);transition:all .18s;display:flex;flex-direction:column;}
+.cc{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--ss);transition:all .18s;}
 .cc:hover{border-color:var(--ac);box-shadow:0 7px 24px var(--glow);transform:translateY(-2px);}
-.cct{padding:12px 14px;background:linear-gradient(135deg,var(--info-lt),#eff6ff);border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;}
-.ccb{padding:12px 14px;display:flex;flex-direction:column;gap:8px;}
-.ccd{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;line-height:1.1;}
+.cct{padding:13px 15px;background:linear-gradient(135deg,var(--info-lt),#eff6ff);border-bottom:1px solid var(--border);display:flex;gap:11px;align-items:flex-start;}
+.ccb{padding:11px 15px;display:flex;flex-direction:column;gap:8px;}
+.ccd{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;}
 .ccd.urg{color:var(--err);} .ccd.sn{color:var(--warn);} .ccd.gd{color:var(--ok);}
-.ccf{display:flex;gap:6px;padding:10px 14px;border-top:1px solid var(--border);flex-wrap:wrap;align-items:center;}
+.ccf{display:flex;gap:6px;padding:9px 15px;border-top:1px solid var(--border);flex-wrap:wrap;}
 .matitem{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;}
 .matcb{width:15px;height:15px;border-radius:3px;border:2px solid var(--border2);cursor:pointer;flex-shrink:0;transition:all .14s;display:flex;align-items:center;justify-content:center;}
 .matcb.on{background:var(--ok);border-color:var(--ok);}
@@ -389,7 +347,7 @@ textarea.fi{resize:vertical;min-height:70px;}
 /* ── NOTIFICATION BELL ── */
 .tbell{position:relative;}
 .bell-badge{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;background:var(--err);border-radius:99px;font-size:9px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid var(--surf);pointer-events:none;}
-#notif-panel{display:none;position:fixed;top:calc(var(--th) + 6px);right:10px;width:min(320px, calc(100vw - 20px));max-height:70vh;background:var(--surf);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sl);z-index:400;overflow:hidden;flex-direction:column;}
+#notif-panel{display:none;position:fixed;top:calc(var(--th) + 6px);right:14px;width:320px;max-height:70vh;background:var(--surf);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sl);z-index:400;overflow:hidden;flex-direction:column;}
 #notif-panel.open{display:flex;}
 .notif-head{padding:12px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .notif-title{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;}
@@ -419,44 +377,37 @@ textarea.fi{resize:vertical;min-height:70px;}
 .import-cc-title{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;color:var(--info);margin-bottom:7px;}
 .import-cc-steps{font-size:13px;color:var(--txt2);line-height:2;margin-bottom:11px;}
 .import-cc-steps span{font-weight:700;color:var(--info);}
+/* ── VIDEOAULAS IMPORT TEMPLATE ── */
+.import-va-box{background:linear-gradient(135deg,var(--ac-lt),#f5f3ff);border:1.5px solid var(--ac);border-radius:var(--r);padding:18px;margin-bottom:14px;}
+.import-va-title{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;color:var(--ac);margin-bottom:7px;}
+.import-va-steps{font-size:13px;color:var(--txt2);line-height:2;margin-bottom:11px;}
+.import-va-steps span{font-weight:700;color:var(--ac);}
+.import-va-prompt{background:var(--surf);border:1px solid var(--border2);border-radius:var(--rsm);padding:12px 14px;font-size:12px;color:var(--txt2);line-height:1.8;margin-bottom:11px;position:relative;}
+.import-va-prompt-label{font-size:10px;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.import-va-prompt code{font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px;color:var(--ac);}
+/* ── SIMULADOS IMPORT TEMPLATE ── */
+.import-sim-box{background:linear-gradient(135deg,var(--gold-lt),#fffbeb);border:1.5px solid var(--gold);border-radius:var(--r);padding:18px;margin-bottom:14px;}
+.import-sim-title{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;color:var(--gold);margin-bottom:7px;}
+.import-sim-steps{font-size:13px;color:var(--txt2);line-height:2;margin-bottom:11px;}
+.import-sim-steps span{font-weight:700;color:var(--gold);}
+.import-sim-prompt{background:var(--surf);border:1px solid var(--border2);border-radius:var(--rsm);padding:12px 14px;font-size:12px;color:var(--txt2);line-height:1.8;margin-bottom:11px;position:relative;}
+.import-sim-prompt-label{font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.import-sim-prompt code{font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px;color:var(--gold);}
 .va-cinema-hint{font-size:11px;color:var(--muted);margin-left:auto;}
 @media(max-width:900px){
-  #sb{position:fixed;top:0;left:0;bottom:0;transform:translateX(-100%);box-shadow:var(--sl);z-index:300;}
+  #sb{position:fixed;top:0;left:0;bottom:0;transform:translateX(-100%);box-shadow:var(--sl);}
   #sb.open{transform:translateX(0);}
   #sbo.open{display:block;}
-  .mbtn{display:flex;}
-  .g3{grid-template-columns:repeat(3,1fr);}
-  .exsb{display:none;}
-  .exqa{padding:16px 13px;}
+  .mbtn{display:flex;} .g3{grid-template-columns:repeat(2,1fr);}
+  .exsb{display:none;} .exqa{padding:16px 13px;}
 }
 @media(max-width:600px){
-  #content{padding:12px;padding-bottom:calc(20px + var(--safe-bot));}
-  .g3{grid-template-columns:repeat(3,1fr);}
-  .g2{grid-template-columns:repeat(2,1fr);}
-  .ga{grid-template-columns:1fr;}
-  .sval{font-size:18px;}
-  .respct{font-size:44px;}
-  .sh{flex-direction:column;align-items:flex-start;gap:8px;}
-  .shr{width:100%;justify-content:flex-start;}
-  .extop{padding:0 9px;gap:5px;}
-  .extimer{font-size:14px;}
-  #topbar{padding:0 12px;}
-  .card{padding:13px;}
-  .scard{padding:12px 13px;}
-  .btn.bp,.btn.bo{font-size:13px;padding:8px 13px;}
-  .modal{padding:18px 16px;}
+  #content{padding:12px;height:calc(100vh - var(--th));} .g3,.g2{grid-template-columns:1fr;} .ga{grid-template-columns:1fr;}
+  .sval{font-size:20px;} .respct{font-size:44px;} .sh{flex-direction:column;align-items:flex-start;}
+  .extop{padding:0 9px;gap:5px;} .extimer{font-size:14px;}
+  #topbar{padding:0 11px;}
 }
-@media(max-width:420px){
-  .g3{grid-template-columns:repeat(3,1fr);}
-  .sval{font-size:16px;}
-  .slbl{font-size:9px;}
-  .extop .btn.bsm:not(:last-child):not(:nth-last-child(2)){display:none;}
-  #content{padding:10px;}
-}
-@media(max-width:360px){
-  .g3{grid-template-columns:repeat(3,1fr);}
-  .sval{font-size:15px;}
-}
+@media(max-width:380px){.g3{grid-template-columns:1fr;}.extop .btn.bsm:not(:last-child):not(:nth-last-child(2)){display:none;}}
 </style>
 </head>
 <body>
@@ -534,16 +485,16 @@ textarea.fi{resize:vertical;min-height:70px;}
     <div><div class="stitle">Olá, <span id="gname">Estudante</span>! 👋</div><div class="ssub">Painel completo de estudos para concursos</div></div>
     <div class="shr"><button class="btn bp" onclick="go('coach')">🤖 Coach</button><button class="btn bo" onclick="go('cronograma')">📅 Cronograma</button></div>
   </div>
-  <div class="g3" style="margin-bottom:12px">
-    <div class="scard"><div class="slbl">Dias até a prova</div><div class="sval cerr" id="ds-dias">—</div><div class="schg" style="color:var(--muted)" id="ds-nome">Nenhum concurso</div></div>
+  <div class="g3" style="margin-bottom:14px">
+    <div class="scard"><div class="slbl">Dias até a prova</div><div class="sval cerr" id="ds-dias">—</div><div class="schg muted" id="ds-nome" style="color:var(--muted)">Nenhum concurso</div></div>
     <div class="scard"><div class="slbl">Simulados feitos</div><div class="sval" id="ds-sims">0</div><div class="schg cok">↑ Total acumulado</div></div>
     <div class="scard"><div class="slbl">Média de acertos</div><div class="sval cac" id="ds-media">—</div><div class="schg" style="color:var(--muted)">Desempenho geral</div></div>
   </div>
-  <div class="g2" style="margin-bottom:12px">
-    <div class="card"><div style="font-family:'Sora',sans-serif;font-weight:700;margin-bottom:10px;font-size:14px">🎯 Concursos Inscritos</div><div id="ds-conc"></div></div>
-    <div class="card"><div style="font-family:'Sora',sans-serif;font-weight:700;margin-bottom:10px;font-size:14px">📋 Últimos Resultados</div><div id="ds-rec"></div></div>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card"><div style="font-family:'Sora',sans-serif;font-weight:700;margin-bottom:11px">🎯 Concursos Inscritos</div><div id="ds-conc"></div></div>
+    <div class="card"><div style="font-family:'Sora',sans-serif;font-weight:700;margin-bottom:11px">📋 Últimos Resultados</div><div id="ds-rec"></div></div>
   </div>
-  <div class="card"><div style="font-family:'Sora',sans-serif;font-weight:700;margin-bottom:10px;font-size:14px">📈 Desempenho por Matéria</div><div id="ds-mat"></div></div>
+  <div class="card"><div style="font-family:'Sora',sans-serif;font-weight:700;margin-bottom:11px">📈 Desempenho por Matéria</div><div id="ds-mat"></div></div>
 </div>
 
 <!-- ══════════ COACH ══════════ -->
@@ -600,10 +551,30 @@ textarea.fi{resize:vertical;min-height:70px;}
   <div class="sh">
     <div><div class="stitle">🎬 Videoaulas</div><div class="ssub">Organize e acompanhe suas aulas por matéria</div></div>
     <div class="shr">
+      <button class="btn bo bsm" onclick="downloadVATemplate()">⬇️ Modelo JSON</button>
       <button class="btn bo bsm" onclick="removeInvalidVids()" title="Remove videoaulas com links inválidos">🗑 Limpar Inválidas</button>
       <button class="btn bo bsm" onclick="document.getElementById('vafi').click()">📥 Importar JSON</button>
       <button class="btn bp" onclick="openAddVideo()">+ Adicionar</button>
       <input type="file" id="vafi" accept=".json" style="display:none" onchange="handleVAFile(event)" multiple>
+    </div>
+  </div>
+  <div class="import-va-box">
+    <div class="import-va-title">🎬 Como importar videoaulas em lote</div>
+    <div class="import-va-steps">
+      <span>1.</span> Clique em <strong>⬇️ Modelo JSON</strong> para baixar o arquivo de exemplo com a estrutura correta<br>
+      <span>2.</span> Use o <strong>prompt abaixo no Claude</strong> para gerar automaticamente uma lista de videoaulas do YouTube<br>
+      <span>3.</span> Salve a resposta como <code>.json</code> e clique em <strong>📥 Importar JSON</strong><br>
+      <span>4.</span> As videoaulas serão cadastradas automaticamente, sem duplicatas!
+    </div>
+    <div class="import-va-prompt">
+      <div class="import-va-prompt-label">💬 Prompt para gerar videoaulas com o Claude</div>
+      Gere um arquivo JSON com videoaulas do YouTube para estudar <strong>[MATÉRIA]</strong> para o concurso de <strong>[CARGO/ÓRGÃO]</strong>. Use o formato abaixo, com links reais do YouTube. Retorne APENAS o JSON, sem texto extra:<br><br>
+      <code>[{"url":"https://youtube.com/watch?v=ID","titulo":"Título da Aula","materia":"Nome da Matéria","canal":"Nome do Canal","duracao":45,"obs":"Observação opcional"}]</code><br><br>
+      Inclua pelo menos 10 videoaulas variadas, de canais como Gran Cursos, Estratégia, Direção Concursos, QConcursos e professores independentes. Organize por subtópico e ordene do básico ao avançado.
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn bo bsm" onclick="downloadVATemplate()">⬇️ Baixar modelo de videoaulas</button>
+      <button class="btn bp bsm" onclick="document.getElementById('vafi').click()">📥 Importar e cadastrar</button>
     </div>
   </div>
   <input class="sbar" type="text" placeholder="🔍 Buscar por título, matéria ou canal…" id="va-search" oninput="filterVA()">
@@ -616,7 +587,30 @@ textarea.fi{resize:vertical;min-height:70px;}
 <div class="panel" id="panel-simulados">
   <div class="sh">
     <div><div class="stitle">📋 Simulados</div><div class="ssub">Pratique com simulados completos</div></div>
-    <div class="shr"><button class="btn bo bsm" onclick="go('import')">📥 Importar</button><button class="btn bp" onclick="openCreateSim()">+ Criar</button></div>
+    <div class="shr">
+      <button class="btn bo bsm" onclick="downloadSimTemplate()">⬇️ Modelo JSON</button>
+      <button class="btn bo bsm" onclick="go('import')">📥 Importar</button>
+      <button class="btn bp" onclick="openCreateSim()">+ Criar</button>
+    </div>
+  </div>
+  <div class="import-sim-box">
+    <div class="import-sim-title">📋 Como criar e importar simulados automaticamente</div>
+    <div class="import-sim-steps">
+      <span>1.</span> Clique em <strong>⬇️ Modelo JSON</strong> para baixar o arquivo de exemplo com a estrutura exata<br>
+      <span>2.</span> Use o <strong>prompt abaixo no Claude</strong> para gerar um simulado completo com questões e gabarito<br>
+      <span>3.</span> Salve a resposta como <code>.json</code> e clique em <strong>📥 Importar</strong> para enviar o arquivo<br>
+      <span>4.</span> O simulado aparecerá aqui pronto para ser realizado com cronômetro e gabarito automático!
+    </div>
+    <div class="import-sim-prompt">
+      <div class="import-sim-prompt-label">💬 Prompt para gerar simulado com o Claude</div>
+      Crie um simulado no formato JSON para o concurso de <strong>[CARGO/ÓRGÃO]</strong>, com foco em <strong>[MATÉRIA]</strong>, no estilo da banca <strong>[BANCA ex: CESPE/VUNESP/FCC]</strong>. Retorne APENAS o JSON, sem texto extra, seguindo esta estrutura:<br><br>
+      <code>{"titulo":"Nome do Simulado","materia":"Matéria","tempo":60,"questoes":[{"numero":1,"enunciado":"Texto da questão","opcoes":["A) ...","B) ...","C) ...","D) ...","E) ..."],"gabarito":"A","explicacao":"Explicação da resposta correta"}]}</code><br><br>
+      Gere <strong>20 questões</strong> inéditas e desafiadoras, cobrindo os principais tópicos do edital. Cada questão deve ter 5 alternativas (A a E), gabarito correto e explicação detalhada. O campo <strong>"tempo"</strong> é em minutos.
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn bo bsm" onclick="downloadSimTemplate()">⬇️ Baixar modelo de simulado</button>
+      <button class="btn bgold bsm" onclick="go('import')">📥 Importar simulado JSON</button>
+    </div>
   </div>
   <input class="sbar" type="text" placeholder="🔍 Buscar simulados…" id="sim-s" oninput="filterSims()">
   <div id="sim-list" class="ga"></div>
@@ -712,30 +706,6 @@ textarea.fi{resize:vertical;min-height:70px;}
   </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /app -->
-
-<!-- MOBILE BOTTOM NAV -->
-<nav id="mobile-nav">
-  <div class="mnav-item active" data-p="dashboard" onclick="go('dashboard');updateMNav('dashboard')">
-    <div class="mnav-ic">📊</div>
-    <span>Início</span>
-  </div>
-  <div class="mnav-item" data-p="simulados" onclick="go('simulados');updateMNav('simulados')">
-    <div class="mnav-ic">📋</div>
-    <span>Simulados</span>
-  </div>
-  <div class="mnav-item" data-p="cronograma" onclick="go('cronograma');updateMNav('cronograma')">
-    <div class="mnav-ic">📅</div>
-    <span>Cronograma</span>
-  </div>
-  <div class="mnav-item" data-p="concursos" onclick="go('concursos');updateMNav('concursos')">
-    <div class="mnav-ic">🎯</div>
-    <span>Concursos</span>
-  </div>
-  <div class="mnav-item" data-p="coach" onclick="go('coach');updateMNav('coach')">
-    <div class="mnav-ic">🤖</div>
-    <span>Coach</span>
-  </div>
-</nav>
 
 <!-- VIDEO PLAYER OVERLAY -->
 <div id="vidov">
@@ -863,12 +833,7 @@ function go(id){
   closeSB();
   ({dashboard:renderDash,coach:renderCoach,cronograma:renderCronograma,concursos:renderCC,videoaulas:renderVA,simulados:renderSims,questoes:renderQ,flashcards:renderFC,taf:renderTAF,checklist:renderCK,estatisticas:renderStats,ranking:()=>renderRank('g'),import:renderImpList,cadernos:renderCad})[id]?.();
 }
-function updateMNav(id){
-  document.querySelectorAll('.mnav-item').forEach(el=>{
-    el.classList.toggle('active',el.dataset.p===id);
-  });
-}
-document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>{go(el.dataset.p);updateMNav(el.dataset.p);}));
+document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>go(el.dataset.p)));
 document.getElementById('mbtn').addEventListener('click',()=>{document.getElementById('sb').classList.toggle('open');document.getElementById('sbo').classList.toggle('open');});
 document.getElementById('sbo').addEventListener('click',closeSB);
 function closeSB(){document.getElementById('sb').classList.remove('open');document.getElementById('sbo').classList.remove('open');}
@@ -891,7 +856,7 @@ document.getElementById('mol').addEventListener('click',e=>{if(e.target.id==='mo
 // ══════════════════════════════════════════════════════════
 //  CONCURSOS
 // ══════════════════════════════════════════════════════════
-function handleCCFile(e){[...e.target.files].forEach(f=>{const r=new FileReader();r.onload=async ev=>{try{let d=JSON.parse(ev.target.result);if(!Array.isArray(d))d=[d];for(const x of d){const mats=(x.materias||[]).map(m=>({nome:typeof m==='string'?m:m.nome,feita:m.feita||false}));await dbAdd('concursos',{nome:x.nome||x.titulo||f.name.replace('.json',''),orgao:x.orgao||'',cargo:x.cargo||'',status:x.status||'Estudando',vagas:x.vagas||0,salario:x.salario||'',dataProva:x.dataProva||'',horaProva:x.horaProva||'08:00',inscricaoFim:x.inscricaoFim||'',edital:x.edital||'',local:x.local||'',obs:x.obs||'',materias:mats,hasTAF:x.hasTAF||false,criadoEm:Date.now()});}concursos=await dbAll('concursos');renderCC();renderDash();await updateCronoSel();const lastCC=concursos[concursos.length-1];if(lastCC)document.getElementById('crono-sel').value=lastCC.id;toast('✅ Concurso(s) importado(s)! Cronograma gerado.','ok');setTimeout(()=>go('cronograma'),500);}catch(err){toast('❌ '+err.message,'err');}};r.readAsText(f);});e.target.value='';}
+function handleCCFile(e){[...e.target.files].forEach(f=>{const r=new FileReader();r.onload=async ev=>{try{let d=JSON.parse(ev.target.result);if(!Array.isArray(d))d=[d];for(const x of d){const mats=(x.materias||[]).map(m=>({nome:typeof m==='string'?m:m.nome,feita:m.feita||false}));await dbAdd('concursos',{nome:x.nome||x.titulo||f.name.replace('.json',''),orgao:x.orgao||'',cargo:x.cargo||'',status:x.status||'Estudando',vagas:x.vagas||0,salario:x.salario||'',dataProva:x.dataProva||'',horaProva:x.horaProva||'08:00',inscricaoFim:x.inscricaoFim||'',edital:x.edital||'',local:x.local||'',obs:x.obs||'',materias:mats,hasTAF:x.hasTAF||false,criadoEm:Date.now()});}concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();toast('✅ Concurso(s) importado(s)!','ok');}catch(err){toast('❌ '+err.message,'err');}};r.readAsText(f);});e.target.value='';}
 
 async function openAddCC(){
   showModal('Cadastrar Concurso',`
@@ -922,11 +887,9 @@ async function openAddCC(){
       if(!n){toast('Informe o nome','err');return;}
       if(!d){toast('Informe a data da prova','err');return;}
       const mats=document.getElementById('cm').value.split(',').map(m=>m.trim()).filter(Boolean).map(m=>({nome:m,feita:false}));
-      const newId=await dbAdd('concursos',{nome:n,orgao:document.getElementById('co').value,cargo:document.getElementById('cc').value,status:'Estudando',vagas:+document.getElementById('cv').value||0,salario:document.getElementById('cs').value,dataProva:d,horaProva:document.getElementById('ch').value,inscricaoFim:document.getElementById('ci').value,edital:document.getElementById('ce').value,local:document.getElementById('cl').value,obs:document.getElementById('cob').value,materias:mats,hasTAF:!!document.getElementById('ctaf').value,criadoEm:Date.now()});
-      concursos=await dbAll('concursos');renderCC();renderDash();await updateCronoSel();
-      // Auto-selecionar o concurso recém-cadastrado no cronograma
-      document.getElementById('crono-sel').value=newId;
-      toast('✅ Concurso cadastrado! Cronograma gerado automaticamente.','ok');
+      await dbAdd('concursos',{nome:n,orgao:document.getElementById('co').value,cargo:document.getElementById('cc').value,status:'Estudando',vagas:+document.getElementById('cv').value||0,salario:document.getElementById('cs').value,dataProva:d,horaProva:document.getElementById('ch').value,inscricaoFim:document.getElementById('ci').value,edital:document.getElementById('ce').value,local:document.getElementById('cl').value,obs:document.getElementById('cob').value,materias:mats,hasTAF:!!document.getElementById('ctaf').value,criadoEm:Date.now()});
+      concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();
+      toast('✅ Concurso cadastrado! Cronograma gerado.','ok');
       setTimeout(()=>go('cronograma'),400);
     }}
   ]);
@@ -2186,10 +2149,8 @@ async function handleCCFile(e){
         hasTAF:!!d.hasTAF,
         criadoEm:Date.now()
       });
-      concursos=await dbAll('concursos');renderCC();renderDash();await updateCronoSel();
-      // Auto-selecionar o concurso importado no cronograma
-      const lastCC=concursos[concursos.length-1];
-      if(lastCC)document.getElementById('crono-sel').value=lastCC.id;
+      concursos=await dbAll('concursos');
+      renderCC();renderDash();updateCronoSel();
       toast(`✅ Concurso "${d.nome}" importado com sucesso!`,'ok');
       setTimeout(()=>go('cronograma'),500);
     }catch(err){
@@ -2197,6 +2158,91 @@ async function handleCCFile(e){
     }
   };
   reader.readAsText(file);
+}
+
+// ══════════════════════════════════════════════════════════
+//  VIDEOAULAS — DOWNLOAD TEMPLATE
+// ══════════════════════════════════════════════════════════
+function downloadVATemplate(){
+  const modelo=[
+    {
+      url:"https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      titulo:"Aula 01 — Introdução à Língua Portuguesa para Concursos",
+      materia:"Língua Portuguesa",
+      canal:"Gran Cursos Online",
+      duracao:45,
+      obs:"Foco em concordância verbal e nominal. Banca CESPE."
+    },
+    {
+      url:"https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      titulo:"Aula 02 — Direito Constitucional: Princípios Fundamentais",
+      materia:"Direito Constitucional",
+      canal:"Estratégia Concursos",
+      duracao:60,
+      obs:"Art. 1º ao 4º da CF/88. Essencial para provas de nível médio e superior."
+    },
+    {
+      url:"https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      titulo:"Aula 03 — Raciocínio Lógico: Proposições e Conectivos",
+      materia:"Raciocínio Lógico",
+      canal:"Direção Concursos",
+      duracao:50,
+      obs:"Tabelas verdade, negação e equivalência lógica."
+    }
+  ];
+  const blob=new Blob([JSON.stringify(modelo,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='modelo_videoaulas.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('✅ Modelo de videoaulas baixado! Edite os links e importe.','ok');
+}
+
+// ══════════════════════════════════════════════════════════
+//  SIMULADOS — DOWNLOAD TEMPLATE
+// ══════════════════════════════════════════════════════════
+function downloadSimTemplate(){
+  const modelo={
+    titulo:"Simulado Modelo — Língua Portuguesa",
+    materia:"Língua Portuguesa",
+    tempo:60,
+    questoes:[
+      {
+        numero:1,
+        enunciado:"Assinale a alternativa em que a concordância verbal está correta de acordo com a norma culta da língua portuguesa.",
+        opcoes:[
+          "A) Fazem dois anos que não o vejo.",
+          "B) Houveram muitas reclamações durante o evento.",
+          "C) Existem uma solução para cada problema.",
+          "D) Faz dois anos que não o vejo.",
+          "E) Haviam muitos candidatos inscritos no concurso."
+        ],
+        gabarito:"D",
+        explicacao:"O verbo 'fazer' indicando tempo decorrido é impessoal, portanto deve ser usado na 3ª pessoa do singular: 'Faz dois anos'. As demais alternativas apresentam erros de concordância verbal."
+      },
+      {
+        numero:2,
+        enunciado:"Em relação ao uso da crase, assinale a alternativa correta.",
+        opcoes:[
+          "A) Ele foi à São Paulo ontem.",
+          "B) Entregou o relatório à diretora responsável.",
+          "C) Refiro-me à aquele acontecimento.",
+          "D) Ela chegou à pé na reunião.",
+          "E) O documento foi enviado à você."
+        ],
+        gabarito:"B",
+        explicacao:"A crase ocorre quando há fusão da preposição 'a' com o artigo definido feminino 'a'. Em 'à diretora', temos 'a (preposição) + a (artigo) diretora'. São Paulo é cidade que não admite artigo; 'à pé' é errado pois 'pé' é masculino; pronomes pessoais não admitem artigo."
+      }
+    ]
+  };
+  const blob=new Blob([JSON.stringify(modelo,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='modelo_simulado.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('✅ Modelo de simulado baixado! Use o prompt do Claude para gerar o seu.','ok');
 }
 
 // ══════════════════════════════════════════════════════════
