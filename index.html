@@ -343,6 +343,41 @@ textarea.fi{resize:vertical;min-height:70px;}
 .va-invalid .va-thumb{background:linear-gradient(135deg,#450a0a,#7f1d1d)!important;cursor:default;}
 /* VA THUMB IMG */
 .va-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+
+/* ── NOTIFICATION BELL ── */
+.tbell{position:relative;}
+.bell-badge{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;background:var(--err);border-radius:99px;font-size:9px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid var(--surf);pointer-events:none;}
+#notif-panel{display:none;position:fixed;top:calc(var(--th) + 6px);right:14px;width:320px;max-height:70vh;background:var(--surf);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sl);z-index:400;overflow:hidden;flex-direction:column;}
+#notif-panel.open{display:flex;}
+.notif-head{padding:12px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.notif-title{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;}
+.notif-clear{font-size:11px;color:var(--ac);cursor:pointer;font-weight:600;}
+.notif-clear:hover{text-decoration:underline;}
+.notif-body{overflow-y:auto;flex:1;}
+.notif-item{display:flex;gap:10px;padding:11px 15px;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;transition:background .12s;align-items:flex-start;}
+.notif-item:hover{background:var(--surf2);}
+.notif-item.unread{background:var(--ac-lt);}
+.notif-ic{font-size:18px;flex-shrink:0;margin-top:1px;}
+.notif-txt{flex:1;min-width:0;}
+.notif-msg{font-weight:600;line-height:1.4;margin-bottom:2px;}
+.notif-sub{font-size:11px;color:var(--muted);}
+.notif-empty{padding:28px;text-align:center;color:var(--muted);font-size:13px;}
+
+/* ── CINEMA MODE ── */
+#vidov.cinema{background:#000!important;padding:0!important;}
+#vidov.cinema .vidbox{max-width:100%!important;width:100%!important;height:100vh!important;border-radius:0!important;}
+#vidov.cinema .vidtop,#vidov.cinema .vidfoot{opacity:0;transition:opacity .3s;}
+#vidov.cinema:hover .vidtop,#vidov.cinema:hover .vidfoot{opacity:1;}
+.vidbtncinema{background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;}
+.vidbtncinema:hover{background:rgba(255,255,255,.25);}
+#vidov.cinema .vidframe{padding-top:calc(100vh - 90px);max-height:calc(100vh - 90px);}
+
+/* ── CONCURSO IMPORT TEMPLATE ── */
+.import-cc-box{background:linear-gradient(135deg,var(--info-lt),#eff6ff);border:1.5px solid var(--info);border-radius:var(--r);padding:18px;margin-bottom:14px;}
+.import-cc-title{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;color:var(--info);margin-bottom:7px;}
+.import-cc-steps{font-size:13px;color:var(--txt2);line-height:2;margin-bottom:11px;}
+.import-cc-steps span{font-weight:700;color:var(--info);}
+.va-cinema-hint{font-size:11px;color:var(--muted);margin-left:auto;}
 @media(max-width:900px){
   #sb{position:fixed;top:0;left:0;bottom:0;transform:translateX(-100%);box-shadow:var(--sl);}
   #sb.open{transform:translateX(0);}
@@ -368,14 +403,20 @@ textarea.fi{resize:vertical;min-height:70px;}
     <div class="logo-ic">🎯</div>
     <div class="logo-txt">Concurso<br>Pro</div>
   </div>
-  <div class="uc">
-    <div class="uc-row">
+  <div class="uc" style="padding:9px 18px;border-bottom:1px solid var(--border)">
+    <div class="uc-row" style="margin-bottom:4px">
       <div class="uav" id="sbAv">U</div>
-      <div><div class="uname" id="sbName">Estudante</div><div class="uprem">⭐ PREMIUM</div></div>
+      <div>
+        <div class="uname" id="sbName">Estudante</div>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:2px">
+          <span class="uprem">⭐ PREMIUM</span>
+          <span style="font-size:10px;color:var(--ac);font-weight:600">Nv.<span id="sbLvl">1</span></span>
+          <span style="font-size:10px;color:var(--gold);font-weight:600">🪙<span id="sbCoins">0</span></span>
+        </div>
+      </div>
     </div>
-    <div class="ulvl">🏆 Nível <span id="sbLvl">1</span> · <span id="sbXP">0</span>/100 XP</div>
-    <div class="xp-t"><div class="xp-f" id="sbBar" style="width:0%"></div></div>
-    <div class="ucoins">🪙 <span id="sbCoins">0</span> ConcursoCoins</div>
+    <div class="xp-t" style="height:4px"><div class="xp-f" id="sbBar" style="width:0%"></div></div>
+    <span id="sbXP" style="display:none">0</span>
   </div>
   <div class="nsec">
     <div class="nlbl">Início</div>
@@ -408,10 +449,18 @@ textarea.fi{resize:vertical;min-height:70px;}
     <button class="mbtn" id="mbtn">☰</button>
     <div class="tbt" id="tbt">Dashboard</div>
     <div class="tbr">
-      <div class="tbell">🔔</div>
+      <div class="tbell" id="bellBtn" onclick="toggleNotif()" title="Notificações">🔔<span class="bell-badge" id="bellBadge" style="display:none">0</span></div>
       <div class="tbav" id="tbAv">U</div>
     </div>
   </header>
+  <!-- NOTIFICATION PANEL -->
+  <div id="notif-panel">
+    <div class="notif-head">
+      <div class="notif-title">🔔 Notificações</div>
+      <div class="notif-clear" onclick="clearNotifs()">Marcar todas lidas</div>
+    </div>
+    <div class="notif-body" id="notif-body"></div>
+  </div>
   <div id="content">
 
 <!-- ══════════ DASHBOARD ══════════ -->
@@ -459,9 +508,23 @@ textarea.fi{resize:vertical;min-height:70px;}
   <div class="sh">
     <div><div class="stitle">🎯 Meus Concursos</div><div class="ssub">Acompanhe inscrições, prazos e progresso</div></div>
     <div class="shr">
+      <button class="btn bo bsm" onclick="downloadCCTemplate()">⬇️ Modelo JSON</button>
       <button class="btn bo bsm" onclick="document.getElementById('ccfi').click()">📥 Importar JSON</button>
       <button class="btn bp" onclick="openAddCC()">+ Cadastrar</button>
       <input type="file" id="ccfi" accept=".json" style="display:none" onchange="handleCCFile(event)">
+    </div>
+  </div>
+  <div class="import-cc-box">
+    <div class="import-cc-title">📋 Como importar um concurso automaticamente</div>
+    <div class="import-cc-steps">
+      <span>1.</span> Clique em <strong>⬇️ Modelo JSON</strong> para baixar o arquivo de exemplo<br>
+      <span>2.</span> Edite o arquivo com os dados do seu concurso (nome, órgão, data, matérias…)<br>
+      <span>3.</span> Clique em <strong>📥 Importar JSON</strong> e selecione o arquivo editado<br>
+      <span>4.</span> O concurso será cadastrado automaticamente com cronograma gerado!
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn bo bsm" onclick="downloadCCTemplate()">⬇️ Baixar modelo de concurso</button>
+      <button class="btn bp bsm" onclick="document.getElementById('ccfi').click()">📥 Importar e cadastrar</button>
     </div>
   </div>
   <div id="cc-list"></div>
@@ -590,6 +653,7 @@ textarea.fi{resize:vertical;min-height:70px;}
   <div class="vidbox">
     <div class="vidtop">
       <div class="vidtitle" id="vidtitle">Videoaula</div>
+      <button class="vidbtncinema" onclick="toggleCinema()" id="btnCinema" title="Modo Cinema">🎬 Cinema</button>
       <button class="vidbtnclose" onclick="closeVid()">✕</button>
     </div>
     <div class="vidframe"><iframe id="vidframe" src="" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>
@@ -1425,8 +1489,8 @@ async function renderVA(q='',mat=''){
   chipsEl.innerHTML=`<div class="chip ${!mat?'on':''}" onclick="vaDF='';filterVA()">Todas (${vids.length})</div>`
     +mats.map(m=>{
       const cnt=vids.filter(v=>v.materia===m).length;
-      const mJson=JSON.stringify(m);
-      return`<div class="chip ${mat===m?'on':''}" onclick="vaDF=${mJson};filterVA()">${m} <span style="opacity:.65;font-size:10px">(${cnt})</span></div>`;
+      const safe=m.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+      return`<div class="chip ${mat===m?'on':''}" onclick="vaDF='${safe}';filterVA()">${m} <span style="opacity:.65;font-size:10px">(${cnt})</span></div>`;
     }).join('');
   let list=vids;
   if(q)list=list.filter(v=>v.titulo.toLowerCase().includes(q.toLowerCase())||v.materia?.toLowerCase().includes(q.toLowerCase())||v.canal?.toLowerCase().includes(q.toLowerCase()));
@@ -1526,9 +1590,12 @@ async function playVid(id){
 }
 function closeVid(){
   document.getElementById('vidov').classList.remove('open');
+  document.getElementById('vidov').classList.remove('cinema');
   document.getElementById('vidframe').src='';
   document.body.style.overflow='';
   currentVidId=null;
+  cinemaMode=false;
+  document.getElementById('btnCinema').textContent='🎬 Cinema';
 }
 async function markVidDone(){
   if(!currentVidId)return;
@@ -1542,6 +1609,15 @@ async function markVidDone(){
   renderVA(document.getElementById('va-search').value,vaDF);
 }
 document.getElementById('vidov').addEventListener('click',e=>{if(e.target.id==='vidov')closeVid();});
+// ── CINEMA MODE ──
+let cinemaMode=false;
+function toggleCinema(){
+  cinemaMode=!cinemaMode;
+  const ov=document.getElementById('vidov');
+  const btn=document.getElementById('btnCinema');
+  if(cinemaMode){ov.classList.add('cinema');btn.textContent='✕ Sair Cinema';}
+  else{ov.classList.remove('cinema');btn.textContent='🎬 Cinema';}
+}
 
 // ══════════════════════════════════════════════════════════
 //  SIMULADOS
@@ -1831,6 +1907,201 @@ async function viewCad(id){const c=await dbGet('cadernos',id);const qs=c.questoe
 async function saveQCard(){const cads=await dbAll('cadernos');if(!cads.length){toast('Crie um caderno primeiro','err');return;}showModal('Salvar no Caderno',`<div class="fg"><label class="fl">Caderno</label><select id="selcad" class="fi">${cads.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('')}</select></div>`,[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Salvar',c:'bp',fn:async()=>{const id=+document.getElementById('selcad').value;const c=await dbGet('cadernos',id);const q=examSim.questoes[qi];if(!c.questoes)c.questoes=[];if(!c.questoes.some(x=>x.numero===q.numero&&x.enunciado===q.enunciado)){c.questoes.push({...q,_titulo:examSim.titulo});await dbPut('cadernos',c);toast('🔖 Questão salva!','ok');}else toast('Já está neste caderno','err');}}]);}
 
 // ══════════════════════════════════════════════════════════
+//  NOTIFICATIONS (SININHO)
+// ══════════════════════════════════════════════════════════
+let notifOpen=false;
+const NOTIF_KEY='notifs_v1';
+const NOTIF_READ_KEY='notifs_read_v1';
+
+function getNotifs(){try{return JSON.parse(localStorage.getItem(NOTIF_KEY)||'[]');}catch{return[];}}
+function saveNotifs(arr){localStorage.setItem(NOTIF_KEY,JSON.stringify(arr));}
+function getReadSet(){try{return new Set(JSON.parse(localStorage.getItem(NOTIF_READ_KEY)||'[]'));}catch{return new Set();}}
+function saveReadSet(s){localStorage.setItem(NOTIF_READ_KEY,JSON.stringify([...s]));}
+
+async function buildNotifications(){
+  const arr=[];
+  const nowStr=toISO(today());
+  concursos=await dbAll('concursos');
+  results=await dbAll('resultados');
+
+  // 10 dias antes da prova
+  concursos.forEach(c=>{
+    if(!c.dataProva)return;
+    const dias=diffD(c.dataProva,nowStr);
+    if(dias>0&&dias<=10){
+      arr.push({id:`prova_${c.id}_${dias}`,ic:'🚨',msg:`Faltam ${dias} dia(s) para a prova!`,sub:`${c.nome} — ${fmtBR(c.dataProva)}`,type:'alert',ts:Date.now()});
+    }
+    if(dias>0&&dias<=30&&dias>10){
+      arr.push({id:`prova_${c.id}_30`,ic:'📅',msg:`${dias} dias para a prova`,sub:`${c.nome} — se prepare!`,type:'info',ts:Date.now()-1000});
+    }
+    // Matérias pendentes
+    const pend=(c.materias||[]).filter(m=>!m.feita);
+    if(pend.length>0&&dias>0){
+      arr.push({id:`pend_${c.id}`,ic:'📚',msg:`${pend.length} matéria(s) pendente(s)`,sub:`${c.nome}: ${pend.slice(0,3).map(m=>m.nome).join(', ')}${pend.length>3?'…':''}`,type:'study',ts:Date.now()-2000});
+    }
+  });
+
+  // Coach: desempenho abaixo de 60%
+  const totalQ=results.reduce((a,r)=>a+r.total,0);
+  const totalC=results.reduce((a,r)=>a+r.corrects,0);
+  const media=totalQ?Math.round((totalC/totalQ)*100):null;
+  if(media!==null&&media<60){
+    arr.push({id:'media_baixa',ic:'⚠️',msg:'Média abaixo de 60%!',sub:`Seu aproveitamento atual é ${media}%. O coach recomenda revisão de erros.`,type:'coach',ts:Date.now()-3000});
+  }
+
+  // Hoje: lembrete de estudar
+  const hour=new Date().getHours();
+  if(hour>=18){
+    arr.push({id:`estudo_dia_${nowStr}`,ic:'🤖',msg:'Coach: hora de estudar hoje?',sub:'Não esqueça das metas diárias. Acesse o Coach para ver sua rotina.',type:'coach',ts:Date.now()-4000});
+  }
+
+  // Inscrição vencendo
+  concursos.forEach(c=>{
+    if(!c.inscricaoFim)return;
+    const d=diffD(c.inscricaoFim,nowStr);
+    if(d>=0&&d<=5){
+      arr.push({id:`insc_${c.id}`,ic:'📋',msg:`Inscrição encerra em ${d} dia(s)!`,sub:`${c.nome} — não perca o prazo!`,type:'alert',ts:Date.now()-500});
+    }
+  });
+
+  arr.sort((a,b)=>b.ts-a.ts);
+  saveNotifs(arr);
+  return arr;
+}
+
+function renderNotifPanel(arr){
+  const read=getReadSet();
+  const el=document.getElementById('notif-body');
+  if(!arr.length){el.innerHTML='<div class="notif-empty">✅ Nenhuma notificação no momento</div>';return;}
+  el.innerHTML=arr.map(n=>`<div class="notif-item ${read.has(n.id)?'':'unread'}" onclick="markNotifRead('${n.id}')">
+    <div class="notif-ic">${n.ic}</div>
+    <div class="notif-txt"><div class="notif-msg">${n.msg}</div><div class="notif-sub">${n.sub}</div></div>
+  </div>`).join('');
+}
+
+function updateBadge(arr){
+  const read=getReadSet();
+  const unread=arr.filter(n=>!read.has(n.id)).length;
+  const badge=document.getElementById('bellBadge');
+  if(unread>0){badge.textContent=unread>9?'9+':unread;badge.style.display='flex';}
+  else badge.style.display='none';
+}
+
+async function toggleNotif(){
+  notifOpen=!notifOpen;
+  const panel=document.getElementById('notif-panel');
+  if(notifOpen){
+    const arr=await buildNotifications();
+    renderNotifPanel(arr);
+    updateBadge(arr);
+    panel.classList.add('open');
+    // close on outside click
+    setTimeout(()=>document.addEventListener('click',outsideNotif),10);
+  } else {
+    panel.classList.remove('open');
+    document.removeEventListener('click',outsideNotif);
+  }
+}
+
+function outsideNotif(e){
+  if(!document.getElementById('notif-panel').contains(e.target)&&!document.getElementById('bellBtn').contains(e.target)){
+    document.getElementById('notif-panel').classList.remove('open');
+    document.removeEventListener('click',outsideNotif);
+    notifOpen=false;
+  }
+}
+
+function markNotifRead(id){
+  const s=getReadSet();s.add(id);saveReadSet(s);
+  const arr=getNotifs();renderNotifPanel(arr);updateBadge(arr);
+}
+
+function clearNotifs(){
+  const arr=getNotifs();
+  const s=new Set(arr.map(n=>n.id));saveReadSet(s);
+  renderNotifPanel(arr);updateBadge(arr);
+}
+
+async function initNotifBadge(){
+  const arr=await buildNotifications();
+  updateBadge(arr);
+}
+
+// ══════════════════════════════════════════════════════════
+//  CONCURSO — DOWNLOAD TEMPLATE
+// ══════════════════════════════════════════════════════════
+function downloadCCTemplate(){
+  const modelo={
+    nome:"Concurso Exemplo — Tribunal Regional Federal",
+    orgao:"TRF 1ª Região",
+    cargo:"Analista Judiciário — Área Administrativa",
+    status:"Estudando",
+    vagas:50,
+    salario:"8547.68",
+    dataProva:"2025-12-15",
+    horaProva:"09:00",
+    inscricaoFim:"2025-10-01",
+    edital:"https://www.trf1.jus.br/edital-exemplo.pdf",
+    local:"Brasília - DF",
+    hasTAF:"",
+    obs:"Banca: CESPE/CEBRASPE. Prova objetiva com 120 questões.",
+    materias:[
+      "Língua Portuguesa",
+      "Direito Constitucional",
+      "Direito Administrativo",
+      "Raciocínio Lógico",
+      "Informática",
+      "Conhecimentos Específicos"
+    ]
+  };
+  const blob=new Blob([JSON.stringify(modelo,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='modelo_concurso.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('✅ Modelo baixado! Edite os dados e importe.','ok');
+}
+
+async function handleCCFile(e){
+  const file=e.target.files[0];
+  e.target.value='';
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(!d.nome)throw new Error('Campo "nome" obrigatório no JSON');
+      const mats=(d.materias||[]).map(m=>typeof m==='string'?{nome:m,feita:false}:{...m,feita:m.feita||false});
+      await dbAdd('concursos',{
+        nome:d.nome,
+        orgao:d.orgao||'',
+        cargo:d.cargo||'',
+        status:d.status||'Estudando',
+        vagas:+d.vagas||0,
+        salario:d.salario||'',
+        dataProva:d.dataProva||'',
+        horaProva:d.horaProva||'',
+        inscricaoFim:d.inscricaoFim||'',
+        edital:d.edital||'',
+        local:d.local||'',
+        obs:d.obs||'',
+        materias:mats,
+        hasTAF:!!d.hasTAF,
+        criadoEm:Date.now()
+      });
+      concursos=await dbAll('concursos');
+      renderCC();renderDash();updateCronoSel();
+      toast(`✅ Concurso "${d.nome}" importado com sucesso!`,'ok');
+      setTimeout(()=>go('cronograma'),500);
+    }catch(err){
+      toast('❌ Erro ao importar: '+err.message,'err');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ══════════════════════════════════════════════════════════
 //  BOOT
 // ══════════════════════════════════════════════════════════
 async function boot(){
@@ -1842,6 +2113,9 @@ async function boot(){
   vids=await dbAll('videoaulas');
   await updateCronoSel();
   renderDash();
+  await initNotifBadge();
+  // Refresh notifications every 5 minutes
+  setInterval(initNotifBadge, 5*60*1000);
 }
 boot();
 </script>
