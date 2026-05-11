@@ -486,31 +486,28 @@ async function playVid(id) {
   document.getElementById('vidov').classList.add('open');
   document.body.style.overflow = 'hidden';
 
-  if (ytPlayer && ytPlayer.loadVideoById) {
-    ytPlayer.loadVideoById({
-      videoId: videoId,
-      startSeconds: startSeconds
-    });
-  } else {
-    // Limpa o container antes de criar o player
-    document.getElementById('vidframe').innerHTML = '';
-    ytPlayer = new YT.Player('vidframe', {
-      height: '100%',
-      width: '100%',
-      videoId: videoId,
-      playerVars: {
-        'autoplay': 1,
-        'rel': 0,
-        'start': startSeconds
+  // Sempre limpa o container e recria o player para garantir o carregamento imediato do progresso
+  document.getElementById('vidframe').innerHTML = '<div id="yt-player-container"></div>';
+  ytPlayer = new YT.Player('yt-player-container', {
+    height: '100%',
+    width: '100%',
+    videoId: videoId,
+    playerVars: {
+      'autoplay': 1,
+      'rel': 0,
+      'start': startSeconds
+    },
+    events: {
+      'onReady': (event) => {
+        if (startSeconds > 0) event.target.seekTo(startSeconds);
+        event.target.playVideo();
       },
-      events: {
-        'onStateChange': (event) => {
-          if (event.data == YT.PlayerState.PLAYING) startProgressTracking();
-          else stopProgressTracking();
-        }
+      'onStateChange': (event) => {
+        if (event.data == YT.PlayerState.PLAYING) startProgressTracking();
+        else stopProgressTracking();
       }
-    });
-  }
+    }
+  });
 }
 
 function startProgressTracking() {
@@ -1264,11 +1261,8 @@ async function renderCoach(){
   const dow=now.getDay();
   const nowStr=toISO(today());
 
-  const proxCC=concursos.filter(c=>c.dataProva&&diffD(c.dataProva,nowStr)>0).sort((a,b)=>new Date(a.dataProva)-new Date(b.dataProva))[0];
+  const proxCC=concursos.filter(c=>c.dataProva&&diffD(c.dataProva,nowStr)>=0).sort((a,b)=>new Date(a.dataProva)-new Date(b.dataProva))[0];
   const diasLeft=proxCC?diffD(proxCC.dataProva,nowStr):null;
-  const mats=proxCC?.materias||[];
-  const pendentes=mats.filter(m=>!m.feita);
-  const matHoje=pendentes.length?pendentes[now.getDate()%pendentes.length]?.nome:'Revisão Geral';
   const totalQ=results.reduce((a,r)=>a+r.total,0);
   const totalC=results.reduce((a,r)=>a+r.corrects,0);
   const media=totalQ?Math.round((totalC/totalQ)*100):0;
@@ -1280,19 +1274,27 @@ async function renderCoach(){
 
   let alertMsg=media<60?'⚠️ Sua média está abaixo de 60%. Priorize questões e revisão de erros!':media<75?'👍 Bom progresso! Continue mantendo o ritmo.':'🔥 Excelente desempenho! Você está no caminho certo.';
 
-  // Build tasks
-  const tasks=[];
-  if(isRest){
-    tasks.push({ic:'☀️',title:'Dia de Descanso Ativo',desc:'Seu cérebro precisa de recuperação. Faça uma revisão leve de flashcards (15-20min máximo) ou simplesmente descanse.',type:'rest'});
-    tasks.push({ic:'🧘',title:'Preparação Mental',desc:'Visualize seu sucesso. Lembre-se do seu objetivo, do motivo que te fez começar e da transformação que a aprovação trará.',type:'rest'});
-    tasks.push({ic:'📖',title:'Opcional: Revisão Leve',desc:'Se quiser estudar, reveja apenas os resumos que você já fez. Sem matéria nova. Máximo 1 hora.',type:'rest'});
-  } else {
-    tasks.push({ic:'📚',title:`Matéria do dia: ${matHoje}`,desc:`Dedique 90 minutos ao estudo de ${matHoje}. Leia a teoria, faça resumo no papel e resolva 20 questões sobre o tema.`,type:'study'});
-    if(isSim)tasks.push({ic:'📋',title:'Simulado Cronometrado',desc:'Faça um simulado completo com tempo controlado. Simule exatamente as condições da prova — sem pausas, sem celular.',type:'sim'});
-    tasks.push({ic:'📝',title:'Bloco de Questões',desc:`Resolva 30 questões de ${matHoje}. Para cada erro, releia a teoria correspondente e anote o ponto de atenção.`,type:'q'});
-    tasks.push({ic:'🔄',title:'Revisão de Erros',desc:'Reveja as questões que errou na última sessão. Entender o erro é mais valioso do que acertar uma nova questão.',type:'rev'});
-    if(hasTAF&&isTAF)tasks.push({ic:'🏃',title:`Treino TAF — ${dow===1?'Corrida':dow===3?'Força':' Completo'}`,desc:dow===1?'Corrida contínua 20min. Cronometre sua distância no Teste Cooper (12min). Registre o resultado.':dow===3?'4 séries de 10 flexões | 4 séries de 15 abdominais | 3 séries de barra (máximo). Descanse 90s entre séries.':'Treino integrado: Cooper 12min + 4×10 flexões + 4×15 abdominais + 3×barra. Anote todos os resultados.',type:'taf'});
-    if(hasTAF&&isRecovery)tasks.push({ic:'🚶',title:'Caminhada Leve (30min)',desc:'Recuperação ativa muscular. Ritmo moderado, sem esforço. Essencial para não acumular fadiga e lesionar.',type:'taf'});
+  // Build tasks baseadas no cronograma
+  let tasks=[];
+  if(proxCC){
+    const provaD=new Date(proxCC.dataProva+'T12:00:00');
+    const startD=today();
+    const schedule=genSchedule(proxCC,startD,provaD,proxCC.materias||[],hasTAF);
+    const todayTasks=schedule[nowStr]||[];
+    tasks=todayTasks.map(t=>({
+      ic:t.t==='study'?'📚':t.t==='rev'?'📖':t.t==='sim'?'📝':t.t==='taf'?'🏃':'☀️',
+      title:t.l,
+      desc:t.d,
+      type:t.t
+    }));
+  }
+
+  if(tasks.length===0){
+    if(isRest){
+      tasks.push({ic:'☀️',title:'Dia de Descanso Ativo',desc:'Seu cérebro precisa de recuperação. Faça uma revisão leve de flashcards (15-20min máximo) ou simplesmente descanse.',type:'rest'});
+    } else {
+      tasks.push({ic:'📚',title:'Revisão Geral',desc:'Nenhuma matéria específica no cronograma para hoje. Aproveite para revisar seus pontos fracos.',type:'study'});
+    }
   }
 
   // Rotina sugerida
@@ -1307,7 +1309,7 @@ async function renderCoach(){
   </div>
 
   <div style="margin-bottom:16px">
-    <div class="sec-h">📋 Tarefas de Hoje</div>
+    <div class="sec-h">📋 Tarefas de Hoje (Baseadas no Cronograma)</div>
     ${tasks.map((t,i)=>`<div class="ctask" id="ct${i}">
       <div class="ctn ${t.type==='taf'?'taf':t.type==='rest'?'done':''}" style="font-size:16px">${t.ic}</div>
       <div class="ctb">
@@ -2464,31 +2466,28 @@ async function playVid(id) {
   document.getElementById('vidov').classList.add('open');
   document.body.style.overflow = 'hidden';
 
-  if (ytPlayer && ytPlayer.loadVideoById) {
-    ytPlayer.loadVideoById({
-      videoId: videoId,
-      startSeconds: startSeconds
-    });
-  } else {
-    // Limpa o container antes de criar o player
-    document.getElementById('vidframe').innerHTML = '';
-    ytPlayer = new YT.Player('vidframe', {
-      height: '100%',
-      width: '100%',
-      videoId: videoId,
-      playerVars: {
-        'autoplay': 1,
-        'rel': 0,
-        'start': startSeconds
+  // Sempre limpa o container e recria o player para garantir o carregamento imediato do progresso
+  document.getElementById('vidframe').innerHTML = '<div id="yt-player-container"></div>';
+  ytPlayer = new YT.Player('yt-player-container', {
+    height: '100%',
+    width: '100%',
+    videoId: videoId,
+    playerVars: {
+      'autoplay': 1,
+      'rel': 0,
+      'start': startSeconds
+    },
+    events: {
+      'onReady': (event) => {
+        if (startSeconds > 0) event.target.seekTo(startSeconds);
+        event.target.playVideo();
       },
-      events: {
-        'onStateChange': (event) => {
-          if (event.data == YT.PlayerState.PLAYING) startProgressTracking();
-          else stopProgressTracking();
-        }
+      'onStateChange': (event) => {
+        if (event.data == YT.PlayerState.PLAYING) startProgressTracking();
+        else stopProgressTracking();
       }
-    });
-  }
+    }
+  });
 }
 
 function startProgressTracking() {
