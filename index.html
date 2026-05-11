@@ -372,27 +372,24 @@ textarea.fi{resize:vertical;min-height:70px;}
 .vidbtncinema:hover{background:rgba(255,255,255,.25);}
 #vidov.cinema .vidframe{padding-top:calc(100vh - 90px);max-height:calc(100vh - 90px);}
 
-/* ── CONCURSO IMPORT TEMPLATE ── */
-.import-cc-box{background:linear-gradient(135deg,var(--info-lt),#eff6ff);border:1.5px solid var(--info);border-radius:var(--r);padding:18px;margin-bottom:14px;}
+/* ── COLLAPSIBLE HINT BOX ── */
+.hint-box{border-radius:var(--r);margin-bottom:14px;overflow:hidden;}
+.hint-box.info{background:linear-gradient(135deg,var(--info-lt),#eff6ff);border:1.5px solid var(--info);}
+.hint-box.warn{background:linear-gradient(135deg,#fffbeb,#fef9c3);border:1.5px solid var(--gold);}
+.hint-toggle{display:flex;align-items:center;gap:8px;padding:11px 16px;cursor:pointer;user-select:none;width:100%;}
+.hint-toggle:hover{filter:brightness(.97);}
+.hint-toggle-title{font-family:'Sora',sans-serif;font-weight:700;font-size:13px;flex:1;}
+.hint-box.info .hint-toggle-title{color:var(--info);}
+.hint-box.warn .hint-toggle-title{color:#92400e;}
+.hint-arrow{font-size:11px;transition:transform .2s;color:var(--muted);}
+.hint-box.open .hint-arrow{transform:rotate(180deg);}
+.hint-body{display:none;padding:0 16px 14px;}
+.hint-box.open .hint-body{display:block;}
+/* ── CONCURSO IMPORT TEMPLATE (legacy aliases) ── */
+.import-cc-box{background:linear-gradient(135deg,var(--info-lt),#eff6ff);border:1.5px solid var(--info);border-radius:var(--r);overflow:hidden;margin-bottom:14px;}
 .import-cc-title{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;color:var(--info);margin-bottom:7px;}
 .import-cc-steps{font-size:13px;color:var(--txt2);line-height:2;margin-bottom:11px;}
 .import-cc-steps span{font-weight:700;color:var(--info);}
-/* ── VIDEOAULAS IMPORT TEMPLATE ── */
-.import-va-box{background:linear-gradient(135deg,var(--ac-lt),#f5f3ff);border:1.5px solid var(--ac);border-radius:var(--r);padding:18px;margin-bottom:14px;}
-.import-va-title{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;color:var(--ac);margin-bottom:7px;}
-.import-va-steps{font-size:13px;color:var(--txt2);line-height:2;margin-bottom:11px;}
-.import-va-steps span{font-weight:700;color:var(--ac);}
-.import-va-prompt{background:var(--surf);border:1px solid var(--border2);border-radius:var(--rsm);padding:12px 14px;font-size:12px;color:var(--txt2);line-height:1.8;margin-bottom:11px;position:relative;}
-.import-va-prompt-label{font-size:10px;font-weight:700;color:var(--ac);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
-.import-va-prompt code{font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px;color:var(--ac);}
-/* ── SIMULADOS IMPORT TEMPLATE ── */
-.import-sim-box{background:linear-gradient(135deg,var(--gold-lt),#fffbeb);border:1.5px solid var(--gold);border-radius:var(--r);padding:18px;margin-bottom:14px;}
-.import-sim-title{font-family:'Sora',sans-serif;font-weight:700;font-size:14px;color:var(--gold);margin-bottom:7px;}
-.import-sim-steps{font-size:13px;color:var(--txt2);line-height:2;margin-bottom:11px;}
-.import-sim-steps span{font-weight:700;color:var(--gold);}
-.import-sim-prompt{background:var(--surf);border:1px solid var(--border2);border-radius:var(--rsm);padding:12px 14px;font-size:12px;color:var(--txt2);line-height:1.8;margin-bottom:11px;position:relative;}
-.import-sim-prompt-label{font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
-.import-sim-prompt code{font-family:monospace;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px;color:var(--gold);}
 .va-cinema-hint{font-size:11px;color:var(--muted);margin-left:auto;}
 @media(max-width:900px){
   #sb{position:fixed;top:0;left:0;bottom:0;transform:translateX(-100%);box-shadow:var(--sl);}
@@ -530,17 +527,23 @@ textarea.fi{resize:vertical;min-height:70px;}
       <input type="file" id="ccfi" accept=".json" style="display:none" onchange="handleCCFile(event)">
     </div>
   </div>
-  <div class="import-cc-box">
-    <div class="import-cc-title">📋 Como importar um concurso automaticamente</div>
-    <div class="import-cc-steps">
-      <span>1.</span> Clique em <strong>⬇️ Modelo JSON</strong> para baixar o arquivo de exemplo<br>
-      <span>2.</span> Edite o arquivo com os dados do seu concurso (nome, órgão, data, matérias…)<br>
-      <span>3.</span> Clique em <strong>📥 Importar JSON</strong> e selecione o arquivo editado<br>
-      <span>4.</span> O concurso será cadastrado automaticamente com cronograma gerado!
+  <div class="hint-box info" id="hint-concursos">
+    <div class="hint-toggle" onclick="toggleHint('hint-concursos')">
+      <span style="font-size:15px">📋</span>
+      <span class="hint-toggle-title">Como importar um concurso automaticamente</span>
+      <span class="hint-arrow">&#9660;</span>
     </div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap">
-      <button class="btn bo bsm" onclick="downloadCCTemplate()">⬇️ Baixar modelo de concurso</button>
-      <button class="btn bp bsm" onclick="document.getElementById('ccfi').click()">📥 Importar e cadastrar</button>
+    <div class="hint-body">
+      <div class="import-cc-steps">
+        <span>1.</span> Clique em <strong>&#11015;&#65039; Modelo JSON</strong> para baixar o arquivo de exemplo<br>
+        <span>2.</span> Edite o arquivo com os dados do seu concurso (nome, orgao, data, materias)<br>
+        <span>3.</span> Clique em <strong>&#128229; Importar JSON</strong> e selecione o arquivo editado<br>
+        <span>4.</span> O concurso sera cadastrado automaticamente com cronograma gerado!
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn bo bsm" onclick="downloadCCTemplate()">&#11015;&#65039; Baixar modelo de concurso</button>
+        <button class="btn bp bsm" onclick="document.getElementById('ccfi').click()">&#128229; Importar e cadastrar</button>
+      </div>
     </div>
   </div>
   <div id="cc-list"></div>
@@ -551,30 +554,35 @@ textarea.fi{resize:vertical;min-height:70px;}
   <div class="sh">
     <div><div class="stitle">🎬 Videoaulas</div><div class="ssub">Organize e acompanhe suas aulas por matéria</div></div>
     <div class="shr">
-      <button class="btn bo bsm" onclick="downloadVATemplate()">⬇️ Modelo JSON</button>
       <button class="btn bo bsm" onclick="removeInvalidVids()" title="Remove videoaulas com links inválidos">🗑 Limpar Inválidas</button>
       <button class="btn bo bsm" onclick="document.getElementById('vafi').click()">📥 Importar JSON</button>
       <button class="btn bp" onclick="openAddVideo()">+ Adicionar</button>
       <input type="file" id="vafi" accept=".json" style="display:none" onchange="handleVAFile(event)" multiple>
     </div>
   </div>
-  <div class="import-va-box">
-    <div class="import-va-title">🎬 Como importar videoaulas em lote</div>
-    <div class="import-va-steps">
-      <span>1.</span> Clique em <strong>⬇️ Modelo JSON</strong> para baixar o arquivo de exemplo com a estrutura correta<br>
-      <span>2.</span> Use o <strong>prompt abaixo no Claude</strong> para gerar automaticamente uma lista de videoaulas do YouTube<br>
-      <span>3.</span> Salve a resposta como <code>.json</code> e clique em <strong>📥 Importar JSON</strong><br>
-      <span>4.</span> As videoaulas serão cadastradas automaticamente, sem duplicatas!
+  <div class="hint-box info" id="hint-videoaulas">
+    <div class="hint-toggle" onclick="toggleHint('hint-videoaulas')">
+      <span style="font-size:15px">🎬</span>
+      <span class="hint-toggle-title">Como importar videoaulas em lote</span>
+      <span class="hint-arrow">&#9660;</span>
     </div>
-    <div class="import-va-prompt">
-      <div class="import-va-prompt-label">💬 Prompt para gerar videoaulas com o Claude</div>
-      Gere um arquivo JSON com videoaulas do YouTube para estudar <strong>[MATÉRIA]</strong> para o concurso de <strong>[CARGO/ÓRGÃO]</strong>. Use o formato abaixo, com links reais do YouTube. Retorne APENAS o JSON, sem texto extra:<br><br>
-      <code>[{"url":"https://youtube.com/watch?v=ID","titulo":"Título da Aula","materia":"Nome da Matéria","canal":"Nome do Canal","duracao":45,"obs":"Observação opcional"}]</code><br><br>
-      Inclua pelo menos 10 videoaulas variadas, de canais como Gran Cursos, Estratégia, Direção Concursos, QConcursos e professores independentes. Organize por subtópico e ordene do básico ao avançado.
-    </div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap">
-      <button class="btn bo bsm" onclick="downloadVATemplate()">⬇️ Baixar modelo de videoaulas</button>
-      <button class="btn bp bsm" onclick="document.getElementById('vafi').click()">📥 Importar e cadastrar</button>
+    <div class="hint-body">
+      <div class="import-cc-steps">
+        <span>1.</span> Clique em <strong>Modelo JSON</strong> para baixar o arquivo de exemplo com a estrutura correta<br>
+        <span>2.</span> Use o <strong>prompt abaixo no Claude</strong> para gerar uma lista de videoaulas do YouTube<br>
+        <span>3.</span> Salve a resposta como <code>.json</code> e clique em <strong>Importar JSON</strong><br>
+        <span>4.</span> As videoaulas serao cadastradas automaticamente, sem duplicatas!
+      </div>
+      <div style="background:rgba(59,130,246,.07);border-radius:8px;padding:11px 13px;margin-bottom:11px;font-size:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--info);margin-bottom:6px;letter-spacing:.5px">PROMPT PARA GERAR VIDEOAULAS COM O CLAUDE</div>
+        <div style="color:var(--txt2);line-height:1.7">Gere um arquivo JSON com videoaulas do YouTube para estudar <strong>[MATERIA]</strong> para o concurso de <strong>[CARGO/ORGAO]</strong>. Use o formato abaixo, com links reais do YouTube. Retorne APENAS o JSON, sem texto extra:</div>
+        <div style="background:#1e1b4b;color:#a5f3fc;font-size:11px;padding:8px 10px;border-radius:6px;margin-top:7px;font-family:monospace;line-height:1.6;word-break:break-all">[{"url":"https://youtube.com/watch?v=ID","titulo":"Titulo da Aula","materia":"Nome da Materia","canal":"Nome do Canal","duracao":45,"obs":"Observacao opcional"}]</div>
+        <div style="color:var(--txt2);line-height:1.7;margin-top:8px">Inclua pelo menos 10 videoaulas variadas, de canais como Gran Cursos, Estrategia, Direcao Concursos e QConcursos. Organize por subtopico e ordene do basico ao avancado.</div>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn bo bsm" onclick="downloadVATemplate()">Baixar modelo de videoaulas</button>
+        <button class="btn bp bsm" onclick="document.getElementById('vafi').click()">Importar e cadastrar</button>
+      </div>
     </div>
   </div>
   <input class="sbar" type="text" placeholder="🔍 Buscar por título, matéria ou canal…" id="va-search" oninput="filterVA()">
@@ -587,29 +595,31 @@ textarea.fi{resize:vertical;min-height:70px;}
 <div class="panel" id="panel-simulados">
   <div class="sh">
     <div><div class="stitle">📋 Simulados</div><div class="ssub">Pratique com simulados completos</div></div>
-    <div class="shr">
-      <button class="btn bo bsm" onclick="downloadSimTemplate()">⬇️ Modelo JSON</button>
-      <button class="btn bo bsm" onclick="go('import')">📥 Importar</button>
-      <button class="btn bp" onclick="openCreateSim()">+ Criar</button>
-    </div>
+    <div class="shr"><button class="btn bo bsm" onclick="go('import')">📥 Importar</button><button class="btn bp" onclick="openCreateSim()">+ Criar</button></div>
   </div>
-  <div class="import-sim-box">
-    <div class="import-sim-title">📋 Como criar e importar simulados automaticamente</div>
-    <div class="import-sim-steps">
-      <span>1.</span> Clique em <strong>⬇️ Modelo JSON</strong> para baixar o arquivo de exemplo com a estrutura exata<br>
-      <span>2.</span> Use o <strong>prompt abaixo no Claude</strong> para gerar um simulado completo com questões e gabarito<br>
-      <span>3.</span> Salve a resposta como <code>.json</code> e clique em <strong>📥 Importar</strong> para enviar o arquivo<br>
-      <span>4.</span> O simulado aparecerá aqui pronto para ser realizado com cronômetro e gabarito automático!
+  <div class="hint-box warn" id="hint-simulados">
+    <div class="hint-toggle" onclick="toggleHint('hint-simulados')">
+      <span style="font-size:15px">📋</span>
+      <span class="hint-toggle-title">Como criar e importar simulados automaticamente</span>
+      <span class="hint-arrow">&#9660;</span>
     </div>
-    <div class="import-sim-prompt">
-      <div class="import-sim-prompt-label">💬 Prompt para gerar simulado com o Claude</div>
-      Crie um simulado no formato JSON para o concurso de <strong>[CARGO/ÓRGÃO]</strong>, com foco em <strong>[MATÉRIA]</strong>, no estilo da banca <strong>[BANCA ex: CESPE/VUNESP/FCC]</strong>. Retorne APENAS o JSON, sem texto extra, seguindo esta estrutura:<br><br>
-      <code>{"titulo":"Nome do Simulado","materia":"Matéria","tempo":60,"questoes":[{"numero":1,"enunciado":"Texto da questão","opcoes":["A) ...","B) ...","C) ...","D) ...","E) ..."],"gabarito":"A","explicacao":"Explicação da resposta correta"}]}</code><br><br>
-      Gere <strong>20 questões</strong> inéditas e desafiadoras, cobrindo os principais tópicos do edital. Cada questão deve ter 5 alternativas (A a E), gabarito correto e explicação detalhada. O campo <strong>"tempo"</strong> é em minutos.
-    </div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap">
-      <button class="btn bo bsm" onclick="downloadSimTemplate()">⬇️ Baixar modelo de simulado</button>
-      <button class="btn bgold bsm" onclick="go('import')">📥 Importar simulado JSON</button>
+    <div class="hint-body">
+      <div class="import-cc-steps" style="color:var(--txt2)">
+        <span style="color:#92400e">1.</span> Clique em <strong>Modelo JSON</strong> para baixar o arquivo de exemplo com a estrutura exata<br>
+        <span style="color:#92400e">2.</span> Use o <strong>prompt abaixo no Claude</strong> para gerar um simulado completo com questoes e gabarito<br>
+        <span style="color:#92400e">3.</span> Salve a resposta como <code>.json</code> e clique em <strong>Importar</strong> para enviar o arquivo<br>
+        <span style="color:#92400e">4.</span> O simulado aparecera aqui pronto para ser realizado com cronometro e gabarito automatico!
+      </div>
+      <div style="background:rgba(245,158,11,.08);border-radius:8px;padding:11px 13px;margin-bottom:11px;font-size:12px;">
+        <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px;letter-spacing:.5px">PROMPT PARA GERAR SIMULADO COM O CLAUDE</div>
+        <div style="color:var(--txt2);line-height:1.7">Crie um simulado no formato JSON para o concurso de <strong>[CARGO/ORGAO]</strong>, com foco em <strong>[MATERIA]</strong>, no estilo da banca <strong>[BANCA ex: CESPE/VUNESP/FCC]</strong>. Retorne APENAS o JSON, sem texto extra, seguindo esta estrutura:</div>
+        <div style="background:#1e1b4b;color:#fde68a;font-size:11px;padding:8px 10px;border-radius:6px;margin-top:7px;font-family:monospace;line-height:1.6;word-break:break-all">{"titulo":"Nome do Simulado","materia":"Materia","tempo":60,"questoes":[{"numero":1,"enunciado":"Texto da questao","opcoes":["A) ...","B) ...","C) ...","D) ...","E) ..."],"gabarito":"A","explicacao":"Explicacao da resposta correta"}]}</div>
+        <div style="color:var(--txt2);line-height:1.7;margin-top:8px">Gere <strong>20 questoes</strong> ineditas e desafiadoras, cobrindo os principais topicos do edital. Cada questao deve ter 5 alternativas (A a E), gabarito correto e explicacao detalhada. O campo <strong>"tempo"</strong> e em minutos.</div>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn bo bsm" onclick="downloadSimTemplate()">Baixar modelo de simulado</button>
+        <button class="btn bp bsm" onclick="go('import')">Importar simulado JSON</button>
+      </div>
     </div>
   </div>
   <input class="sbar" type="text" placeholder="🔍 Buscar simulados…" id="sim-s" oninput="filterSims()">
@@ -2161,91 +2171,6 @@ async function handleCCFile(e){
 }
 
 // ══════════════════════════════════════════════════════════
-//  VIDEOAULAS — DOWNLOAD TEMPLATE
-// ══════════════════════════════════════════════════════════
-function downloadVATemplate(){
-  const modelo=[
-    {
-      url:"https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-      titulo:"Aula 01 — Introdução à Língua Portuguesa para Concursos",
-      materia:"Língua Portuguesa",
-      canal:"Gran Cursos Online",
-      duracao:45,
-      obs:"Foco em concordância verbal e nominal. Banca CESPE."
-    },
-    {
-      url:"https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-      titulo:"Aula 02 — Direito Constitucional: Princípios Fundamentais",
-      materia:"Direito Constitucional",
-      canal:"Estratégia Concursos",
-      duracao:60,
-      obs:"Art. 1º ao 4º da CF/88. Essencial para provas de nível médio e superior."
-    },
-    {
-      url:"https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-      titulo:"Aula 03 — Raciocínio Lógico: Proposições e Conectivos",
-      materia:"Raciocínio Lógico",
-      canal:"Direção Concursos",
-      duracao:50,
-      obs:"Tabelas verdade, negação e equivalência lógica."
-    }
-  ];
-  const blob=new Blob([JSON.stringify(modelo,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='modelo_videoaulas.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast('✅ Modelo de videoaulas baixado! Edite os links e importe.','ok');
-}
-
-// ══════════════════════════════════════════════════════════
-//  SIMULADOS — DOWNLOAD TEMPLATE
-// ══════════════════════════════════════════════════════════
-function downloadSimTemplate(){
-  const modelo={
-    titulo:"Simulado Modelo — Língua Portuguesa",
-    materia:"Língua Portuguesa",
-    tempo:60,
-    questoes:[
-      {
-        numero:1,
-        enunciado:"Assinale a alternativa em que a concordância verbal está correta de acordo com a norma culta da língua portuguesa.",
-        opcoes:[
-          "A) Fazem dois anos que não o vejo.",
-          "B) Houveram muitas reclamações durante o evento.",
-          "C) Existem uma solução para cada problema.",
-          "D) Faz dois anos que não o vejo.",
-          "E) Haviam muitos candidatos inscritos no concurso."
-        ],
-        gabarito:"D",
-        explicacao:"O verbo 'fazer' indicando tempo decorrido é impessoal, portanto deve ser usado na 3ª pessoa do singular: 'Faz dois anos'. As demais alternativas apresentam erros de concordância verbal."
-      },
-      {
-        numero:2,
-        enunciado:"Em relação ao uso da crase, assinale a alternativa correta.",
-        opcoes:[
-          "A) Ele foi à São Paulo ontem.",
-          "B) Entregou o relatório à diretora responsável.",
-          "C) Refiro-me à aquele acontecimento.",
-          "D) Ela chegou à pé na reunião.",
-          "E) O documento foi enviado à você."
-        ],
-        gabarito:"B",
-        explicacao:"A crase ocorre quando há fusão da preposição 'a' com o artigo definido feminino 'a'. Em 'à diretora', temos 'a (preposição) + a (artigo) diretora'. São Paulo é cidade que não admite artigo; 'à pé' é errado pois 'pé' é masculino; pronomes pessoais não admitem artigo."
-      }
-    ]
-  };
-  const blob=new Blob([JSON.stringify(modelo,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='modelo_simulado.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast('✅ Modelo de simulado baixado! Use o prompt do Claude para gerar o seu.','ok');
-}
-
-// ══════════════════════════════════════════════════════════
 //  BOOT
 // ══════════════════════════════════════════════════════════
 async function boot(){
@@ -2262,6 +2187,48 @@ async function boot(){
   setInterval(initNotifBadge, 5*60*1000);
 }
 boot();
+
+// ── COLLAPSIBLE HINT BOXES ──
+function toggleHint(id){
+  const box=document.getElementById(id);
+  box.classList.toggle('open');
+  try{localStorage.setItem('hint_'+id,box.classList.contains('open')?'1':'0');}catch(e){}
+}
+function restoreHints(){
+  ['hint-concursos','hint-videoaulas','hint-simulados'].forEach(id=>{
+    try{
+      const el=document.getElementById(id);
+      if(!el)return;
+      const saved=localStorage.getItem('hint_'+id);
+      // default: closed (null or '0')
+      if(saved==='1')el.classList.add('open');
+    }catch(e){}
+  });
+}
+document.addEventListener('DOMContentLoaded',restoreHints);
+
+function downloadVATemplate(){
+  const modelo=[
+    {url:"https://youtube.com/watch?v=dQw4w9WgXcQ",titulo:"Direito Constitucional — Principios Fundamentais",materia:"Direito Constitucional",canal:"Gran Cursos Online",duracao:48,obs:"Aula introdutoria"},
+    {url:"https://youtube.com/watch?v=abc123",titulo:"Direito Administrativo — Ato Administrativo",materia:"Direito Administrativo",canal:"Estrategia Concursos",duracao:62,obs:""}
+  ];
+  const blob=new Blob([JSON.stringify(modelo,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='modelo_videoaulas.json';a.click();
+}
+function downloadSimTemplate(){
+  const modelo={
+    titulo:"Simulado Direito Constitucional 01",
+    materia:"Direito Constitucional",
+    banca:"CESPE",
+    ano:2025,
+    tempo:60,
+    questoes:[
+      {numero:1,enunciado:"A Constituicao Federal de 1988 estabelece que a Republica Federativa do Brasil e formada pela uniao indissoluvel dos Estados, Municipios e do Distrito Federal. Essa afirmacao esta correta?",opcoes:["A) Sim, e exatamente o que consta no Art. 1°","B) Nao, o DF nao e citado","C) Nao, inclui tambem os territorios","D) Sim, mas apenas os Estados e o DF","E) Nenhuma das anteriores"],"gabarito":"A","explicacao":"Art. 1° da CF/88: A Republica Federativa do Brasil, formada pela uniao indissoluvel dos Estados e Municipios e do Distrito Federal."}
+    ]
+  };
+  const blob=new Blob([JSON.stringify(modelo,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='modelo_simulado.json';a.click();
+}
 </script>
 </body>
 </html>
