@@ -342,7 +342,7 @@ textarea.fi{resize:vertical;min-height:70px;}
 .va-invalid{border-color:var(--err)!important;opacity:.85;}
 .va-invalid .va-thumb{background:linear-gradient(135deg,#450a0a,#7f1d1d)!important;cursor:default;}
 /* VA THUMB IMG */
-.va-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.va-thumb img,.va-thumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
 
 /* ── NOTIFICATION BELL ── */
 .tbell{position:relative;}
@@ -993,7 +993,7 @@ function go(id){
   const content=document.getElementById('content');
   if(content)content.scrollTop=0;
   closeSB();
-  ({dashboard:renderDash,coach:renderCoach,cronograma:renderCronograma,concursos:renderCC,videoaulas:renderVA,simulados:renderSims,questoes:renderQ,flashcards:renderFC,taf:renderTAF,checklist:renderCK,estatisticas:renderStats,ranking:()=>renderRank('g'),configuracoes:()=>{},import:renderImpList,cadernos:renderCad})[id]?.();
+  ({dashboard:renderDash,coach:renderCoach,cronograma:renderCronograma,concursos:renderCC,videoaulas:()=>{renderVA();backfillThumbs();},simulados:renderSims,questoes:renderQ,flashcards:renderFC,taf:renderTAF,checklist:renderCK,estatisticas:renderStats,ranking:()=>renderRank('g'),configuracoes:()=>{},import:renderImpList,cadernos:renderCad})[id]?.();
 }
 document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>go(el.dataset.p)));
 document.getElementById('mbtn').addEventListener('click',()=>{document.getElementById('sb').classList.toggle('open');document.getElementById('sbo').classList.toggle('open');});
@@ -1662,7 +1662,13 @@ async function handleVAFile(e){
             dupList.push(titulo);
             continue;
           }
-          await dbAdd('videoaulas',{url,titulo,materia,canal:v.canal||'',duracao:v.duracao||0,tipo:v.tipo||'video',obs:v.obs||'',done:false,criadoEm:Date.now()});
+          // Baixar e salvar thumbnail como base64
+          let thumb=null;
+          try{
+            const thumbUrl=getYTThumb(url);
+            if(thumbUrl)thumb=await downloadThumbAsBase64(thumbUrl);
+          }catch(e){console.warn('Erro ao baixar thumbnail:',e);}
+          await dbAdd('videoaulas',{url,titulo,materia,canal:v.canal||'',duracao:v.duracao||0,tipo:v.tipo||'video',obs:v.obs||'',done:false,thumb,criadoEm:Date.now()});
           currentVids.push({url,titulo,materia}); // evita duplicatas dentro do mesmo arquivo
           added++;
         }
@@ -1702,11 +1708,58 @@ function openAddVideo(){showModal('Adicionar Videoaula',`
   if(!isValidVideoURL(u)){toast('❌ URL inválida ou não reconhecida. Use links do YouTube.','err');return;}
   const currentVids=await dbAll('videoaulas');
   if(isDuplicateVA(u,t,materia,currentVids)){toast('⚠️ Esta videoaula já está cadastrada!','err');return;}
-  await dbAdd('videoaulas',{url:u,titulo:t,materia,canal:document.getElementById('vc').value||'',duracao:+document.getElementById('vd').value||0,done:false,criadoEm:Date.now()});
+  let thumb=null;
+  try{
+    const thumbUrl=getYTThumb(u);
+    if(thumbUrl)thumb=await downloadThumbAsBase64(thumbUrl);
+  }catch(e){console.warn('Erro ao baixar thumbnail:',e);}
+  await dbAdd('videoaulas',{url:u,titulo:t,materia,canal:document.getElementById('vc').value||'',duracao:+document.getElementById('vd').value||0,done:false,thumb,criadoEm:Date.now()});
   vids=await dbAll('videoaulas');renderVA();toast('✅ Videoaula adicionada!','ok');
 }}]);}
 
-function getYTThumb(url){try{const m=url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);return m?`https://img.youtube.com/vi/${m[1]}/mqdefault.jpg`:null;}catch{return null;}}
+function getYTThumb(url){try{const m=url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);return m?`https://img.youtube.com/vi/${m[1]}/hqdefault.jpg`:null;}catch{return null;}}
+
+// Baixa thumbnail e converte para base64
+async function downloadThumbAsBase64(url){
+  try{
+    const resp=await fetch(url,{mode:'no-cors'});
+    const blob=await resp.blob();
+    return new Promise((ok,fail)=>{
+      const reader=new FileReader();
+      reader.onload=()=>ok(reader.result);
+      reader.onerror=fail;
+      reader.readAsDataURL(blob);
+    });
+  }catch(e){
+    console.warn('Erro ao baixar thumbnail:',e);
+    return null;
+  }
+}
+
+// Preenche thumbnails faltantes em segundo plano
+async function backfillThumbs(){
+  const vids=await dbAll('videoaulas');
+  let updated=0;
+  for(const v of vids){
+    if(!v.thumb){
+      try{
+        const thumbUrl=getYTThumb(v.url);
+        if(thumbUrl){
+          const thumb=await downloadThumbAsBase64(thumbUrl);
+          if(thumb){
+            v.thumb=thumb;
+            await dbPut('videoaulas',v);
+            updated++;
+          }
+        }
+      }catch(e){console.warn('Erro ao preencher thumbnail para',v.titulo,':',e);}
+    }
+  }
+  if(updated>0){
+    vids=await dbAll('videoaulas');
+    renderVA(document.getElementById('va-search')?.value||'',vaDF);
+  }
+}
 
 async function renderVA(q='',mat=''){
   vids=await dbAll('videoaulas');
@@ -1736,15 +1789,16 @@ async function renderVA(q='',mat=''){
     +(mat?'<span class="tag tac">📂 '+mat+'</span>':'')
     +'</div>';
   el.innerHTML=header+list.map(v=>{
-    const thumb=getYTThumb(v.url);
     const isInvalid=!isValidVideoURL(v.url);
     const invalidBanner=isInvalid
       ?'<div style="background:var(--err-lt);padding:5px 11px;font-size:11px;font-weight:700;color:var(--err);display:flex;align-items:center;gap:5px">⚠️ Link inválido<button class="btn bd bxs" style="margin-left:auto" onclick="delVA('+v.id+')">Remover</button></div>'
       :'';
     const thumbOnclick=isInvalid?'toast(\'⚠️ Link inválido!\',\'err\')':'playVid('+v.id+')';
     const thumbIcon=isInvalid?'⚠️':'🎬';
-    const thumbImg=thumb&&!isInvalid
-      ?'<img class="va-thumb-img" src="'+thumb+'" onerror="this.parentElement.style.background=\'#1e1b4b\';this.remove()" loading="lazy">'
+    const thumbImg=!isInvalid
+      ?(v.thumb
+        ?'<img class="va-thumb-img" data-id="'+v.id+'" src="'+v.thumb+'" onerror="this.style.display=\'none\'" alt="Thumbnail">'
+        :'<img class="va-thumb-img" data-id="'+v.id+'" src="'+(getYTThumb(v.url)||'')+'" onerror="this.style.display=\'none\'" alt="Thumbnail">')
       :'<span style="font-size:36px">'+thumbIcon+'</span>';
     const playBtn=isInvalid?'':'<div class="va-play">▶</div>';
     const actionBtns=isInvalid
