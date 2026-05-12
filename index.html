@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1619,6 +1618,30 @@ function isValidVideoURL(url){
   try{new URL(url);return true;}catch{return false;}
 }
 
+// Verifica a disponibilidade real de um vídeo do YouTube
+async function checkYouTubeAvailability(url){
+  try{
+    const videoId=getYTId(url);
+    if(!videoId)return false;
+    
+    // Tenta carregar a miniatura do YouTube (método rápido para verificar disponibilidade)
+    const response=await fetch(`https://img.youtube.com/vi/${videoId}/default.jpg`,{method:'HEAD',mode:'no-cors'});
+    
+    // Se conseguir acessar a miniatura, o vídeo provavelmente está disponível
+    // Também tentamos um método alternativo usando oEmbed
+    try{
+      const oembed=await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+      return oembed.ok;
+    }catch{
+      // Se oEmbed falhar, confiamos no resultado da miniatura
+      return response.ok||response.status===0; // status 0 em no-cors significa sucesso
+    }
+  }catch(err){
+    console.warn('Erro ao verificar disponibilidade do vídeo:',err);
+    return false; // Se houver erro, considera indisponível
+  }
+}
+
 // Verifica se vídeo já está cadastrado (por URL ou título+matéria)
 function isDuplicateVA(url,titulo,materia,existingVids){
   const normURL=url.trim().toLowerCase();
@@ -1645,41 +1668,73 @@ async function handleVAFile(e){
         const arr=d.videoaulas||d;
         if(!Array.isArray(arr))throw new Error('Formato inválido — esperado array de videoaulas');
         const currentVids=await dbAll('videoaulas');
-        let added=0,skippedInvalid=0,skippedDup=0;
-        const invalidList=[],dupList=[];
-        for(const v of arr){
+        let added=0,skippedInvalid=0,skippedDup=0,skippedUnavailable=0;
+        const invalidList=[],dupList=[],unavailableList=[];
+        
+        // Mostrar modal de progresso
+        showModal('Importando Videoaulas','<div style="text-align:center;padding:20px"><div style="font-size:14px;color:var(--txt2);margin-bottom:10px">Validando disponibilidade dos vídeos...</div><div style="height:4px;background:var(--border);border-radius:99px;overflow:hidden"><div class="pf" style="width:0%;height:100%"></div></div><div style="font-size:12px;color:var(--muted);margin-top:10px"><span id="progress-count">0</span>/${arr.length}</div></div>',[]);
+        
+        for(let idx=0;idx<arr.length;idx++){
+          const v=arr[idx];
           const url=(v.url||'').trim();
           const titulo=v.titulo||'Sem título';
           const materia=v.materia||'Geral';
+          
+          // Atualizar progresso
+          const progressEl=document.querySelector('#progress-count');
+          if(progressEl)progressEl.textContent=idx+1;
+          const progressBar=document.querySelector('.pf');
+          if(progressBar)progressBar.style.width=((idx+1)/arr.length*100)+'%';
+          
           // Checar URL inválida
           if(!isValidVideoURL(url)){
             skippedInvalid++;
             invalidList.push(titulo||url||'(sem título)');
             continue;
           }
+          
           // Checar duplicata
           if(isDuplicateVA(url,titulo,materia,currentVids)){
             skippedDup++;
             dupList.push(titulo);
             continue;
           }
+          
+          // ✨ NOVA VALIDAÇÃO: Verificar disponibilidade do vídeo
+          const isAvailable=await checkYouTubeAvailability(url);
+          if(!isAvailable){
+            skippedUnavailable++;
+            unavailableList.push(titulo);
+            continue;
+          }
+          
           await dbAdd('videoaulas',{url,titulo,materia,canal:v.canal||'',duracao:v.duracao||0,tipo:v.tipo||'video',obs:v.obs||'',done:false,criadoEm:Date.now()});
-          currentVids.push({url,titulo,materia}); // evita duplicatas dentro do mesmo arquivo
+          currentVids.push({url,titulo,materia});
           added++;
         }
+        
         vids=await dbAll('videoaulas');
         renderVA();
+        
         // Relatório detalhado
         let msg=`✅ ${added} importada(s).`;
-        if(skippedDup>0)msg+=` ⚠️ ${skippedDup} duplicada(s) ignorada(s).`;
-        if(skippedInvalid>0)msg+=` ❌ ${skippedInvalid} inválida(s) removida(s).`;
+        if(skippedUnavailable>0)msg+=` 🚫 ${skippedUnavailable} indisponível(is).`;
+        if(skippedDup>0)msg+=` ⚠️ ${skippedDup} duplicada(s).`;
+        if(skippedInvalid>0)msg+=` ❌ ${skippedInvalid} inválida(s).`;
         toast(msg, added>0?'ok':'err');
-        if(skippedInvalid>0||skippedDup>0){
+        
+        if(skippedInvalid>0||skippedDup>0||skippedUnavailable>0){
           let detail='';
-          if(invalidList.length)detail+=`<div style="margin-bottom:8px"><strong style="color:var(--err)">❌ Links inválidos/removidos (${invalidList.length}):</strong><ul style="margin:5px 0 0 14px;font-size:12px">${invalidList.slice(0,10).map(t=>`<li>${t}</li>`).join('')}${invalidList.length>10?`<li>…e mais ${invalidList.length-10}</li>`:''}</ul></div>`;
-          if(dupList.length)detail+=`<div><strong style="color:var(--warn)">⚠️ Já cadastradas — ignoradas (${dupList.length}):</strong><ul style="margin:5px 0 0 14px;font-size:12px">${dupList.slice(0,10).map(t=>`<li>${t}</li>`).join('')}${dupList.length>10?`<li>…e mais ${dupList.length-10}</li>`:''}</ul></div>`;
+          if(unavailableList.length)detail+=`<div style="margin-bottom:8px"><strong style="color:var(--warn)">🚫 Vídeos indisponíveis/removidos (${unavailableList.length}):</strong><ul style="margin:5px 0 0 14px;font-size:12px">${unavailableList.slice(0,10).map(t=>`<li>${t}</li>`).join('')}${unavailableList.length>10?`<li>…e mais ${unavailableList.length-10}</li>`:''}</ul></div>`;
+          if(invalidList.length)detail+=`<div style="margin-bottom:8px"><strong style="color:var(--err)">❌ Links inválidos (${invalidList.length}):</strong><ul style="margin:5px 0 0 14px;font-size:12px">${invalidList.slice(0,10).map(t=>`<li>${t}</li>`).join('')}${invalidList.length>10?`<li>…e mais ${invalidList.length-10}</li>`:''}</ul></div>`;
+          if(dupList.length)detail+=`<div><strong style="color:var(--warn)">⚠️ Já cadastradas (${dupList.length}):</strong><ul style="margin:5px 0 0 14px;font-size:12px">${dupList.slice(0,10).map(t=>`<li>${t}</li>`).join('')}${dupList.length>10?`<li>…e mais ${dupList.length-10}</li>`:''}</ul></div>`;
           showModal(`Relatório de Importação — ${f.name}`,
             `<div style="font-size:13px;margin-bottom:10px">✅ <strong>${added}</strong> adicionada(s) com sucesso.</div>${detail}`,
+            [{l:'Fechar',c:'bp',fn:()=>{}}]
+          );
+        }else{
+          showModal(`Importação Concluída — ${f.name}`,
+            `<div style="font-size:13px;text-align:center;color:var(--ok)"><strong>✅ Sucesso!</strong></div><div style="font-size:13px;margin-top:10px">Todas as ${added} videoaula(s) foram importadas com sucesso.</div>`,
             [{l:'Fechar',c:'bp',fn:()=>{}}]
           );
         }
@@ -1703,6 +1758,9 @@ function openAddVideo(){showModal('Adicionar Videoaula',`
   if(!isValidVideoURL(u)){toast('❌ URL inválida ou não reconhecida. Use links do YouTube.','err');return;}
   const currentVids=await dbAll('videoaulas');
   if(isDuplicateVA(u,t,materia,currentVids)){toast('⚠️ Esta videoaula já está cadastrada!','err');return;}
+  toast('⏳ Verificando disponibilidade do vídeo...','info');
+  const isAvailable=await checkYouTubeAvailability(u);
+  if(!isAvailable){toast('🚫 Este vídeo não está disponível no YouTube ou foi removido.','err');return;}
   await dbAdd('videoaulas',{url:u,titulo:t,materia,canal:document.getElementById('vc').value||'',duracao:+document.getElementById('vd').value||0,done:false,criadoEm:Date.now()});
   vids=await dbAll('videoaulas');renderVA();toast('✅ Videoaula adicionada!','ok');
 }}]);}
