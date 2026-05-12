@@ -956,7 +956,7 @@ window.addEventListener('error',e=>{
 //  IndexedDB
 // ══════════════════════════════════════════════════════════
 let DB;
-function openDB(){return new Promise((ok,fail)=>{const r=indexedDB.open('MQv6',2);r.onupgradeneeded=e=>{const d=e.target.result;['simulados','resultados','cadernos','videoaulas','concursos','taf','coachlog','flashdecks'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id',autoIncrement:true});});if(!d.objectStoreNames.contains('user'))d.createObjectStore('user',{keyPath:'key'});if(!d.objectStoreNames.contains('checklist'))d.createObjectStore('checklist',{keyPath:'key'});};r.onsuccess=e=>{DB=e.target.result;ok();};r.onerror=()=>fail(r.error);});}
+function openDB(){return new Promise((ok,fail)=>{const r=indexedDB.open('MQv6',2);r.onupgradeneeded=e=>{const d=e.target.result;['simulados','resultados','cadernos','videoaulas','concursos','taf','coachlog','flashdecks','examSessions'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id',autoIncrement:true});});if(!d.objectStoreNames.contains('user'))d.createObjectStore('user',{keyPath:'key'});if(!d.objectStoreNames.contains('checklist'))d.createObjectStore('checklist',{keyPath:'key'});};r.onsuccess=e=>{DB=e.target.result;ok();};r.onerror=()=>fail(r.error);});}
 const T=(s,m='readonly')=>DB.transaction(s,m).objectStore(s);
 const dbAll=s=>new Promise((ok,f)=>{const r=T(s).getAll();r.onsuccess=()=>ok(r.result);r.onerror=()=>f(r.error);});
 const dbGet=(s,k)=>new Promise((ok,f)=>{const r=T(s).get(k);r.onsuccess=()=>ok(r.result);r.onerror=()=>f(r.error);});
@@ -970,6 +970,7 @@ const dbDel=(s,k)=>new Promise((ok,f)=>{const r=T(s,'readwrite').delete(k);r.ons
 let sims=[],results=[],vids=[],concursos=[],allQ=[];
 let user={key:'profile',name:'Estudante',xp:20,level:1,coins:7660};
 let examSim=null,qi=0,answers={},revMode=false,secs=0,timerID=null;
+let autoSaveInterval=null; // Para salvar automaticamente o progresso
 let qDF='',vaDF=''; // filtros ativos
 const COLORS=['#6c5ce7','#10b981','#ef4444','#f59e0b','#3b82f6','#ec4899','#8b5cf6','#06b6d4'];
 const ICONS=['📖','⚖️','🏛️','📜','🔬','🧮','📝','🎓','🔎','📑'];
@@ -1923,9 +1924,135 @@ async function delSim(id){showModal('Remover Simulado','Tem certeza?',[{l:'Cance
 async function renderImpList(){sims=await dbAll('simulados');const el=document.getElementById('imp-list');if(!sims.length){el.innerHTML='<div class="empty" style="padding:22px 0"><div class="eic" style="font-size:30px">📂</div><div class="et">Nenhum simulado importado</div></div>';return;}el.innerHTML=sims.map(s=>`<div class="lrow"><div style="font-size:18px">📋</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.titulo}</div><div style="font-size:11px;color:var(--muted)">${s.questoes.length} questões · ${s.banca} ${s.ano}</div></div><button class="btn bo bxs" onclick="delSim(${s.id})">🗑</button></div>`).join('');}
 
 // ══════════════════════════════════════════════════════════
-//  EXAM ENGINE
+//  EXAM ENGINE - Com Salvamento Automático
 // ══════════════════════════════════════════════════════════
-async function startExam(id){const s=await dbGet('simulados',id);if(!s||!s.questoes.length){toast('Simulado sem questões!','err');return;}examSim=s;qi=0;answers={};revMode=false;secs=0;document.getElementById('exttl').textContent=s.titulo;document.getElementById('exov').classList.add('active');buildNav();renderQE();startClock();}
+
+// Salva o estado atual da sessão de simulado
+async function saveExamSession(){
+  if(!examSim)return;
+  const session={
+    simuladoId:examSim.id,
+    titulo:examSim.titulo,
+    questoes:examSim.questoes,
+    currentQuestion:qi,
+    answers:{...answers},
+    elapsedSeconds:secs,
+    reviewMode:revMode,
+    savedAt:Date.now()
+  };
+  try{
+    // Verifica se já existe uma sessão para este simulado
+    const existing=await dbAll('examSessions');
+    const sessionId=existing.find(s=>s.simuladoId===examSim.id)?.id;
+    if(sessionId){
+      await dbPut('examSessions',{...session,id:sessionId});
+    }else{
+      await dbAdd('examSessions',session);
+    }
+  }catch(err){
+    console.warn('Erro ao salvar sessão:',err);
+  }
+}
+
+// Restaura uma sessão de simulado salva
+async function restoreExamSession(sessionId){
+  try{
+    const session=await dbGet('examSessions',sessionId);
+    if(!session)return false;
+    examSim=session.questoes?{id:session.simuladoId,titulo:session.titulo,questoes:session.questoes}:await dbGet('simulados',session.simuladoId);
+    if(!examSim)return false;
+    qi=session.currentQuestion||0;
+    answers=session.answers||{};
+    revMode=session.reviewMode||false;
+    secs=session.elapsedSeconds||0;
+    return true;
+  }catch(err){
+    console.warn('Erro ao restaurar sessão:',err);
+    return false;
+  }
+}
+
+// Limpa a sessão de simulado
+async function clearExamSession(simuladoId){
+  try{
+    const sessions=await dbAll('examSessions');
+    const session=sessions.find(s=>s.simuladoId===simuladoId);
+    if(session)await dbDel('examSessions',session.id);
+  }catch(err){
+    console.warn('Erro ao limpar sessão:',err);
+  }
+}
+
+// Obtém todas as sessões em andamento
+async function getActiveSessions(){
+  try{
+    return await dbAll('examSessions');
+  }catch(err){
+    console.warn('Erro ao obter sessões:',err);
+    return [];
+  }
+}
+
+async function startExam(id){
+  const s=await dbGet('simulados',id);
+  if(!s||!s.questoes.length){toast('Simulado sem questões!','err');return;}
+  
+  // Verifica se há uma sessão anterior em andamento
+  const sessions=await getActiveSessions();
+  const existingSession=sessions.find(sess=>sess.simuladoId===id);
+  
+  if(existingSession){
+    // Mostra opção de retomar ou começar novo
+    const timeElapsed=Math.floor(existingSession.elapsedSeconds/60);
+    const questionsAnswered=Object.keys(existingSession.answers||{}).length;
+    showModal('Retomar Simulado?',
+      `<div style="font-size:13px;line-height:1.7">
+        <div style="margin-bottom:10px">Você tem uma sessão anterior em andamento:</div>
+        <div style="background:var(--ac-lt);border:1px solid var(--ac);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px">
+          <div>⏳ <strong>${timeElapsed} minutos</strong> de progresso</div>
+          <div>✅ <strong>${questionsAnswered}</strong> questões respondidas</div>
+        </div>
+        <div style="color:var(--muted)">Deseja continuar de onde parou ou começar um novo simulado?</div>
+      </div>`,
+      [
+        {l:'Começar Novo',c:'bo',fn:async()=>{
+          await clearExamSession(id);
+          initExam(s);
+        }},
+        {l:'⏳ Retomar',c:'bp',fn:async()=>{
+          const restored=await restoreExamSession(existingSession.id);
+          if(restored){
+            document.getElementById('exttl').textContent=examSim.titulo;
+            document.getElementById('exov').classList.add('active');
+            buildNav();
+            renderQE();
+            startClock();
+            toast('✅ Sessão retomada!','ok');
+          }else{
+            toast('❌ Erro ao retomar sessão','err');
+            initExam(s);
+          }
+        }}
+      ]
+    );
+  }else{
+    initExam(s);
+  }
+}
+
+function initExam(s){
+  examSim=s;
+  qi=0;
+  answers={};
+  revMode=false;
+  secs=0;
+  document.getElementById('exttl').textContent=s.titulo;
+  document.getElementById('exov').classList.add('active');
+  buildNav();
+  renderQE();
+  startClock();
+  setupAutoSave();
+}
 function buildNav(){document.getElementById('navgrid').innerHTML=examSim.questoes.map((_,i)=>`<button class="nq ${i===qi?'cur':''}" onclick="jumpQ(${i})">${i+1}</button>`).join('');}
 function renderQE(){const q=examSim.questoes[qi],tot=examSim.questoes.length;document.getElementById('qtag').textContent='Questão '+q.numero;document.getElementById('exprog').textContent=`Questão ${qi+1} de ${tot}`;document.getElementById('qtxt').textContent=q.enunciado;document.getElementById('btnPrev').disabled=qi===0;const ans=Object.keys(answers).length;document.getElementById('cntA').textContent=ans;document.getElementById('cntB').textContent=tot-ans;document.getElementById('qopts').innerHTML=q.opcoes.map((o,i)=>{let c='';if(revMode){if(i===q.gabarito)c='cor';else if(answers[qi]===i)c='wrg';}else if(answers[qi]===i)c='sel';return`<div class="opt ${c}" onclick="pickOpt(${i})"><div class="olt">${String.fromCharCode(65+i)}</div><div>${o}</div></div>`;}).join('');const eb=document.getElementById('explbox');if(revMode){const gl=q.gabarito_letra||String.fromCharCode(65+q.gabarito);document.getElementById('expltxt').innerHTML=`<strong>Gabarito: ${gl}</strong> — ${q.opcoes[q.gabarito]}`+(q.explicacao?`<br><br>${q.explicacao}`:'');eb.classList.add('vis');}else eb.classList.remove('vis');updateNav();}
 function updateNav(){document.querySelectorAll('.nq').forEach((b,i)=>{b.className='nq';if(i===qi)b.classList.add('cur');else if(revMode&&answers[i]!==undefined)b.classList.add(answers[i]===examSim.questoes[i].gabarito?'cor':'err');else if(answers[i]!==undefined)b.classList.add('ans');});}
@@ -1934,10 +2061,64 @@ function jumpQ(i){qi=i;renderQE();}
 function prevQ(){if(qi>0){qi--;renderQE();}}
 function nextQ(){if(qi<examSim.questoes.length-1){qi++;renderQE();}else confirmEnd();}
 function toggleRev(){revMode=!revMode;const l=revMode?'✏ Responder':'👁 Gabarito';document.getElementById('btnRev').textContent=l;document.getElementById('btnRev2').textContent=l;renderQE();}
-function startClock(){clearInterval(timerID);timerID=setInterval(()=>{secs++;const m=String(Math.floor(secs/60)).padStart(2,'0'),s=String(secs%60).padStart(2,'0');document.getElementById('exclock').textContent=m+':'+s;},1000);}
+function startClock(){
+  clearInterval(timerID);
+  timerID=setInterval(()=>{
+    secs++;
+    const m=String(Math.floor(secs/60)).padStart(2,'0'),s=String(secs%60).padStart(2,'0');
+    document.getElementById('exclock').textContent=m+':'+s;
+  },1000);
+}
+
+// Configura salvamento automático a cada 10 segundos
+function setupAutoSave(){
+  clearInterval(autoSaveInterval);
+  autoSaveInterval=setInterval(()=>{
+    saveExamSession();
+  },10000); // Salva a cada 10 segundos
+}
 function confirmEnd(){const tot=examSim.questoes.length,ans=Object.keys(answers).length;showModal('Finalizar Simulado',`Você respondeu <strong>${ans}</strong> de <strong>${tot}</strong> questões.`,[{l:'Continuar',c:'bo',fn:()=>{}},{l:'Finalizar',c:'bok',fn:finishExam}]);}
-async function finishExam(){clearInterval(timerID);const qs=examSim.questoes;let cor=0;qs.forEach((_,i)=>{if(answers[i]===qs[i].gabarito)cor++;});const score=(cor/qs.length)*100;const res={simuladoId:examSim.id,titulo:examSim.titulo,materia:examSim.materia,score,corrects:cor,total:qs.length,seconds:secs,answers:{...answers},date:Date.now()};await dbAdd('resultados',res);const s=examSim;s.plays=(s.plays||0)+1;if(s.bestScore===null||score>s.bestScore)s.bestScore=score;await dbPut('simulados',s);sims=await dbAll('simulados');results=await dbAll('resultados');await addXP(Math.floor(score/2)+10);document.getElementById('exov').classList.remove('active');showResult(res);}
-function closeExam(){clearInterval(timerID);document.getElementById('exov').classList.remove('active');}
+async function finishExam(){
+  clearInterval(timerID);
+  clearInterval(autoSaveInterval);
+  const qs=examSim.questoes;
+  let cor=0;
+  qs.forEach((_,i)=>{
+    if(answers[i]===qs[i].gabarito)cor++;
+  });
+  const score=(cor/qs.length)*100;
+  const res={
+    simuladoId:examSim.id,
+    titulo:examSim.titulo,
+    materia:examSim.materia,
+    score,
+    corrects:cor,
+    total:qs.length,
+    seconds:secs,
+    answers:{...answers},
+    date:Date.now()
+  };
+  await dbAdd('resultados',res);
+  const s=examSim;
+  s.plays=(s.plays||0)+1;
+  if(s.bestScore===null||score>s.bestScore)s.bestScore=score;
+  await dbPut('simulados',s);
+  // ✨ Remove a sessão salva após finalizar
+  await clearExamSession(examSim.id);
+  sims=await dbAll('simulados');
+  results=await dbAll('resultados');
+  await addXP(Math.floor(score/2)+10);
+  document.getElementById('exov').classList.remove('active');
+  showResult(res);
+}
+function closeExam(){
+  clearInterval(timerID);
+  clearInterval(autoSaveInterval);
+  // Salva automaticamente antes de fechar
+  saveExamSession();
+  document.getElementById('exov').classList.remove('active');
+  toast('💾 Progresso salvo! Você pode retomar depois.','ok');
+}
 
 // RESULT
 function showResult(r){const pct=Math.round(r.score);document.getElementById('respct').textContent=pct+'%';document.getElementById('resverdict').textContent=pct>=70?'🎉 Excelente!':pct>=50?'👍 Bom resultado!':'💪 Continue praticando!';const m=Math.floor(r.seconds/60),s=r.seconds%60;document.getElementById('resstats').innerHTML=`<div style="text-align:center"><div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--ok)">${r.corrects}</div><div style="font-size:11px;color:var(--muted);font-weight:600">Acertos</div></div><div style="text-align:center"><div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--err)">${r.total-r.corrects}</div><div style="font-size:11px;color:var(--muted);font-weight:600">Erros</div></div><div style="text-align:center"><div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800">${r.total}</div><div style="font-size:11px;color:var(--muted);font-weight:600">Total</div></div><div style="text-align:center"><div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800">${m}m ${s}s</div><div style="font-size:11px;color:var(--muted);font-weight:600">Tempo</div></div>`;const qs=examSim?.questoes||[];document.getElementById('resbreak').innerHTML=qs.map((q,i)=>{const a=r.answers[i],ok=a===q.gabarito,aL=a!==undefined?String.fromCharCode(65+a):'—',gL=q.gabarito_letra||String.fromCharCode(65+q.gabarito);return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><div style="font-weight:700;min-width:65px">Q${q.numero}</div><div style="min-width:85px;color:${ok?'var(--ok)':'var(--err)'}">${ok?'✅ Acerto':'❌ Erro'}</div><div style="color:var(--muted)">Resp: <strong>${aL}</strong> · Gab: <strong>${gL}</strong></div></div>`;}).join('');document.getElementById('resov').style.display='block';}
