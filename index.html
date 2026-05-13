@@ -2073,23 +2073,6 @@ async function saveExamSession(){
     if(sess) await dbPut('examSessions',{...session,id:sess.id});
     else await dbAdd('examSessions',session);
   }catch(err){ console.warn('DB Save Error:',err); }
-},
-    elapsedSeconds:secs,
-    reviewMode:revMode,
-    savedAt:Date.now()
-  };
-  try{
-    // Verifica se já existe uma sessão para este simulado
-    const existing=await dbAll('examSessions');
-    const sessionId=existing.find(s=>s.simuladoId===examSim.id)?.id;
-    if(sessionId){
-      await dbPut('examSessions',{...session,id:sessionId});
-    }else{
-      await dbAdd('examSessions',session);
-    }
-  }catch(err){
-    console.warn('Erro ao salvar sessão:',err);
-  }
 }
 
 // Restaura uma sessão de simulado salva
@@ -2116,17 +2099,6 @@ async function restoreExamSession(sessionId, simuladoId){
     return true;
   }catch(err){
     console.warn('Restore Error:',err);
-    return false;
-  }
-}:await dbGet('simulados',session.simuladoId);
-    if(!examSim)return false;
-    qi=session.currentQuestion||0;
-    answers=session.answers||{};
-    revMode=session.reviewMode||false;
-    secs=session.elapsedSeconds||0;
-    return true;
-  }catch(err){
-    console.warn('Erro ao restaurar sessão:',err);
     return false;
   }
 }
