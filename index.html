@@ -639,6 +639,14 @@ closeVid = function() {
   originalCloseVid();
 };
 
+
+window.addEventListener('beforeunload', (e) => {
+  if(examSim) {
+    saveExamSession();
+    // Em alguns navegadores, o salvamento assíncrono pode falhar no unload, 
+    // mas o LocalStorage (síncrono) que adicionamos acima deve funcionar.
+  }
+});
 </script>
 </head>
 <body>
@@ -2016,7 +2024,22 @@ simDZ.addEventListener('dragover',e=>{e.preventDefault();simDZ.classList.add('ov
 simDZ.addEventListener('dragleave',()=>simDZ.classList.remove('over'));
 simDZ.addEventListener('drop',e=>{e.preventDefault();simDZ.classList.remove('over');[...e.dataTransfer.files].filter(f=>f.name.endsWith('.json')).forEach(f=>{const r=new FileReader();r.onload=ev=>handleSimFiles({target:{files:[f]}});r.readAsText(f);});});
 
-async function renderSims(q=''){sims=await dbAll('simulados');let list=q?sims.filter(s=>s.titulo.toLowerCase().includes(q.toLowerCase())):sims;const el=document.getElementById('sim-list');if(!list.length){el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="eic">📋</div><div class="et">Nenhum simulado encontrado</div><button class="btn bp" style="margin-top:11px" onclick="go(\'import\')">📥 Importar</button></div>';return;}el.innerHTML=list.map((s,i)=>{const bp=s.bestScore!==null?Math.round(s.bestScore):null;return`<div class="sc"><div class="sct"><div style="font-size:22px;margin-bottom:5px">${ICONS[i%ICONS.length]}</div><div style="font-family:'Sora',sans-serif;font-weight:700;font-size:13px">${s.titulo}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${s.banca} · ${s.ano}</div></div><div class="scb"><div style="display:flex;flex-wrap:wrap;gap:5px"><span class="tag tac">📚 ${s.questoes.length} questões</span><span class="tag tinfo">${s.materia}</span>${s.plays?`<span class="tag twarn">▶ ${s.plays}x</span>`:''}</div>${bp!==null?`<div style="font-size:11px;color:var(--muted);margin-bottom:3px">Melhor: ${bp}%</div><div class="pt"><div class="pf" style="width:${bp}%"></div></div>`:'<div style="font-size:12px;color:var(--muted)">Nunca realizado</div>'}<div class="scf"><button class="btn bp bsm bfull" onclick="startExam(${s.id})">▶ Iniciar</button><button class="btn bo bsm" onclick="delSim(${s.id})">🗑</button></div></div></div>`;}).join('');}
+async function renderSims(q=''){
+  sims=await dbAll('simulados');
+  const sessions=await getActiveSessions();
+  let list=q?sims.filter(s=>s.titulo.toLowerCase().includes(q.toLowerCase())):sims;
+  const el=document.getElementById('sim-list');
+  if(!list.length){
+    el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="eic">📋</div><div class="et">Nenhum simulado encontrado</div><button class="btn bp" style="margin-top:11px" onclick="go(\'import\')">📥 Importar</button></div>';
+    return;
+  }
+  el.innerHTML=list.map((s,i)=>{
+    const bp=s.bestScore!==null?Math.round(s.bestScore):null;
+    const hasSession=sessions.find(sess=>sess.simuladoId===s.id);
+    const sessionInfo=hasSession?`<div style="background:var(--warn-lt);border:1px solid var(--warn);border-radius:6px;padding:6px 8px;font-size:11px;margin-bottom:8px;color:var(--warn)"><strong>⏳ Em andamento</strong> — ${Math.floor(hasSession.elapsedSeconds/60)}min · ${Object.keys(hasSession.answers||{}).length} questões</div>`:'';
+    return`<div class="sc"><div class="sct"><div style="font-size:22px;margin-bottom:5px">${ICONS[i%ICONS.length]}</div><div style="font-family:'Sora',sans-serif;font-weight:700;font-size:13px">${s.titulo}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${s.banca} · ${s.ano}</div></div><div class="scb">${sessionInfo}<div style="display:flex;flex-wrap:wrap;gap:5px"><span class="tag tac">📚 ${s.questoes.length} questões</span><span class="tag tinfo">${s.materia}</span>${s.plays?`<span class="tag twarn">▶ ${s.plays}x</span>`:''}</div>${bp!==null?`<div style="font-size:11px;color:var(--muted);margin-bottom:3px">Melhor: ${bp}%</div><div class="pt"><div class="pf" style="width:${bp}%"></div></div>`:'<div style="font-size:12px;color:var(--muted)">Nunca realizado</div>'}<div class="scf"><button class="btn ${hasSession?'bgold':'bp'} bsm bfull" onclick="startExam(${s.id})">${hasSession?'⏳ Retomar':'▶ Iniciar'}</button><button class="btn bo bsm" onclick="delSim(${s.id})">🗑</button></div></div></div>`;
+  }).join('');
+}
 document.getElementById('sim-s').addEventListener('input',e=>renderSims(e.target.value));
 function filterSims(){renderSims(document.getElementById('sim-s').value);}
 function openCreateSim(){showModal('Criar Simulado',`<div class="fg"><label class="fl">Título</label><input id="crt" class="fi" placeholder="Ex: Simulado Direito Constitucional 01"></div><div class="fg"><label class="fl">Matéria</label><input id="crm" class="fi" placeholder="Ex: Direito Constitucional"></div><div class="fg"><label class="fl">Banca</label><input id="crb" class="fi" placeholder="CESPE, FCC..."></div>`,[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Criar',c:'bp',fn:async()=>{const t=document.getElementById('crt').value.trim();if(!t){toast('Informe o título','err');return;}await dbAdd('simulados',{titulo:t,materia:document.getElementById('crm').value||'Geral',banca:document.getElementById('crb').value||'—',ano:new Date().getFullYear(),questoes:[],importedAt:Date.now(),plays:0,bestScore:null});sims=await dbAll('simulados');renderSims();toast('✅ Simulado criado!','ok');}}]);}
@@ -2040,6 +2063,21 @@ async function saveExamSession(){
     reviewMode:revMode,
     savedAt:Date.now()
   };
+  
+  // Backup imediato no LocalStorage (Síncrono e Infalível)
+  localStorage.setItem('last_exam_session_' + examSim.id, JSON.stringify(session));
+  
+  try{
+    const existing=await dbAll('examSessions');
+    const sess = existing.find(s=>s.simuladoId===examSim.id);
+    if(sess) await dbPut('examSessions',{...session,id:sess.id});
+    else await dbAdd('examSessions',session);
+  }catch(err){ console.warn('DB Save Error:',err); }
+},
+    elapsedSeconds:secs,
+    reviewMode:revMode,
+    savedAt:Date.now()
+  };
   try{
     // Verifica se já existe uma sessão para este simulado
     const existing=await dbAll('examSessions');
@@ -2055,11 +2093,32 @@ async function saveExamSession(){
 }
 
 // Restaura uma sessão de simulado salva
-async function restoreExamSession(sessionId){
+async function restoreExamSession(sessionId, simuladoId){
   try{
-    const session=await dbGet('examSessions',sessionId);
-    if(!session)return false;
-    examSim=session.questoes?{id:session.simuladoId,titulo:session.titulo,questoes:session.questoes}:await dbGet('simulados',session.simuladoId);
+    let session = null;
+    if(sessionId) session = await dbGet('examSessions', sessionId);
+    
+    // Se não achou no DB pelo ID, tenta pelo simuladoId no LocalStorage
+    if(!session && simuladoId){
+      const local = localStorage.getItem('last_exam_session_' + simuladoId);
+      if(local) session = JSON.parse(local);
+    }
+    
+    if(!session) return false;
+    
+    examSim = session.questoes ? {id:session.simuladoId, titulo:session.titulo, questoes:session.questoes} : await dbGet('simulados', session.simuladoId);
+    if(!examSim) return false;
+    
+    qi = session.currentQuestion || 0;
+    answers = session.answers || {};
+    revMode = session.reviewMode || false;
+    secs = session.elapsedSeconds || 0;
+    return true;
+  }catch(err){
+    console.warn('Restore Error:',err);
+    return false;
+  }
+}:await dbGet('simulados',session.simuladoId);
     if(!examSim)return false;
     qi=session.currentQuestion||0;
     answers=session.answers||{};
@@ -2116,7 +2175,7 @@ async function startExam(id){
           initExam(s);
         }},
         {l:'⏳ Retomar',c:'bp',fn:async()=>{
-          const restored=await restoreExamSession(existingSession.id);
+          const restored=await restoreExamSession(existingSession.id, id);
           if(restored){
             document.getElementById('exttl').textContent=examSim.titulo;
             document.getElementById('exov').classList.add('active');
@@ -2193,8 +2252,8 @@ function renderQE(){
   updateNav();
 }
 function updateNav(){document.querySelectorAll('.nq').forEach((b,i)=>{b.className='nq';if(i===qi)b.classList.add('cur');else if(revMode&&answers[i]!==undefined)b.classList.add(answers[i]===examSim.questoes[i].gabarito?'cor':'err');else if(answers[i]!==undefined)b.classList.add('ans');});}
-function pickOpt(i){if(revMode)return;answers[qi]=i;renderQE();}
-function jumpQ(i){qi=i;renderQE();}
+function pickOpt(i){if(revMode)return;answers[qi]=i;renderQE();saveExamSession();}
+function jumpQ(i){qi=i;renderQE();saveExamSession();}
 function prevQ(){if(qi>0){qi--;renderQE();}}
 function nextQ(){if(qi<examSim.questoes.length-1){qi++;renderQE();}else confirmEnd();}
 function toggleRev(){revMode=!revMode;const l=revMode?'✏ Responder':'👁 Gabarito';document.getElementById('btnRev').textContent=l;document.getElementById('btnRev2').textContent=l;renderQE();}
@@ -2249,7 +2308,7 @@ async function finishExam(){
   s.plays=(s.plays||0)+1;
   if(s.bestScore===null||score>s.bestScore)s.bestScore=score;
   await dbPut('simulados',s);
-  await clearExamSession(examSim.id);
+  await clearExamSession(examSim.id); localStorage.removeItem('last_exam_session_' + examSim.id);
   sims=await dbAll('simulados');
   results=await dbAll('resultados');
   await addXP(Math.floor(score/2)+10);
@@ -3039,6 +3098,14 @@ closeVid = function() {
   originalCloseVid();
 };
 
+
+window.addEventListener('beforeunload', (e) => {
+  if(examSim) {
+    saveExamSession();
+    // Em alguns navegadores, o salvamento assíncrono pode falhar no unload, 
+    // mas o LocalStorage (síncrono) que adicionamos acima deve funcionar.
+  }
+});
 </script>
 </body>
 </html>
