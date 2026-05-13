@@ -505,6 +505,7 @@ textarea.fi{resize:vertical;min-height:70px;}
   .ga{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
   #content{padding:18px;}
 }
+.active-day{box-shadow:0 0 15px var(--glow);}
 </style>
 <script src="https://www.youtube.com/iframe_api">
 // ══════════════════════════════════════════════════════════
@@ -1083,7 +1084,7 @@ let qDF='',vaDF=''; // filtros ativos
 const COLORS=['#6c5ce7','#10b981','#ef4444','#f59e0b','#3b82f6','#ec4899','#8b5cf6','#06b6d4'];
 const ICONS=['📖','⚖️','🏛️','📜','🔬','🧮','📝','🎓','🔎','📑'];
 const DS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-const PTITLES={dashboard:'Dashboard',coach:'Coach Diário',cronograma:'Cronograma de Estudos',concursos:'Meus Concursos',videoaulas:'Videoaulas',simulados:'Simulados',questoes:'Questões',flashcards:'Flashcards',taf:'TAF — Treinamento Físico',checklist:'Checklist da Prova',estatisticas:'Estatísticas',configuracoes:'Configurações',ranking:'Rankings',import:'Importar Simulado',cadernos:'Cadernos'};
+const PTITLES={dashboard:'Dashboard',coach:'Coach Diário',cronograma:'Cronograma de Estudos',concursos:'Concursos & Cursos',videoaulas:'Videoaulas',simulados:'Simulados',questoes:'Questões',flashcards:'Flashcards',taf:'TAF — Treinamento Físico',checklist:'Checklist da Prova',estatisticas:'Estatísticas',configuracoes:'Configurações',ranking:'Rankings',import:'Importar Simulado',cadernos:'Cadernos'};
 const today=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());};
 const toISO=d=>d.toISOString().split('T')[0];
 const fmtBR=s=>s?new Date(s+'T12:00:00').toLocaleDateString('pt-BR'):'';
@@ -1129,38 +1130,77 @@ document.getElementById('mol').addEventListener('click',e=>{if(e.target.id==='mo
 // ══════════════════════════════════════════════════════════
 function handleCCFile(e){[...e.target.files].forEach(f=>{const r=new FileReader();r.onload=async ev=>{try{let d=JSON.parse(ev.target.result);if(!Array.isArray(d))d=[d];for(const x of d){const mats=(x.materias||[]).map(m=>({nome:typeof m==='string'?m:m.nome,feita:m.feita||false}));await dbAdd('concursos',{nome:x.nome||x.titulo||f.name.replace('.json',''),orgao:x.orgao||'',cargo:x.cargo||'',status:x.status||'Estudando',vagas:x.vagas||0,salario:x.salario||'',dataProva:x.dataProva||'',horaProva:x.horaProva||'08:00',inscricaoFim:x.inscricaoFim||'',edital:x.edital||'',local:x.local||'',obs:x.obs||'',materias:mats,hasTAF:x.hasTAF||false,criadoEm:Date.now()});}concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();toast('✅ Concurso(s) importado(s)!','ok');}catch(err){toast('❌ '+err.message,'err');}};r.readAsText(f);});e.target.value='';}
 
-async function openAddCC(){
-  showModal('Cadastrar Concurso',`
-    <div class="fg"><label class="fl">Nome do concurso *</label><input id="cn" class="fi" placeholder="Ex: Concurso GCM Maceió 2026"></div>
-    <div class="fg"><label class="fl">Órgão / Instituição</label><input id="co" class="fi" placeholder="Ex: Prefeitura Municipal de Maceió"></div>
-    <div class="fg"><label class="fl">Cargo</label><input id="cc" class="fi" placeholder="Ex: Guarda Civil Municipal"></div>
-    <div class="g2">
-      <div class="fg"><label class="fl">Data da prova *</label><input id="cd" class="fi" type="date"></div>
-      <div class="fg"><label class="fl">Hora da prova</label><input id="ch" class="fi" type="time" value="08:00"></div>
+async function openAddCurso(){
+  showModal('Cadastrar Novo Curso / Vestibular',`
+    <div style="background:var(--taf-lt);padding:10px;border-radius:8px;margin-bottom:15px;font-size:12px;color:var(--taf);font-weight:600">
+      🎓 Focado em ENEM, Vestibulares, Graduação ou Cursos Livres.
     </div>
-    <div class="g2">
-      <div class="fg"><label class="fl">Fim das inscrições</label><input id="ci" class="fi" type="date"></div>
-      <div class="fg"><label class="fl">Local da prova</label><input id="cl" class="fi" placeholder="Ex: Maceió/AL"></div>
-    </div>
-    <div class="g2">
-      <div class="fg"><label class="fl">Salário (R$)</label><input id="cs" class="fi" type="number" step="0.01" placeholder="0.00"></div>
-      <div class="fg"><label class="fl">Nº de vagas</label><input id="cv" class="fi" type="number" placeholder="0"></div>
-    </div>
-    <div class="fg"><label class="fl">Matérias do edital (separadas por vírgula)</label><textarea id="cm" class="fi" placeholder="Língua Portuguesa, Raciocínio Lógico, Direito Constitucional..."></textarea></div>
-    <div class="fg"><label class="fl">Inclui TAF (Teste de Aptidão Física)?</label><select id="ctaf" class="fi"><option value="">Não</option><option value="1">Sim</option></select></div>
-    <div class="fg"><label class="fl">Link do edital</label><input id="ce" class="fi" type="url" placeholder="https://..."></div>
-    <div class="fg"><label class="fl">Observações / Banca</label><textarea id="cob" class="fi" placeholder="Banca organizadora, taxa de inscrição, reserva PcD..."></textarea></div>
+    <div class="fg"><label class="fl">Nome do Curso / Objetivo *</label><input id="cur-n" class="fi" placeholder="Ex: ENEM 2026 ou Curso de Python"></div>
+    <div class="fg"><label class="fl">Instituição / Escola</label><input id="cur-i" class="fi" placeholder="Ex: USP, Alura, Descomplica..."></div>
+    <div class="fg"><label class="fl">Data do Exame / Conclusão *</label><input id="cur-d" class="fi" type="date"></div>
+    <div class="fg"><label class="fl">Disciplinas / Módulos (separados por vírgula)</label><textarea id="cur-m" class="fi" placeholder="Física, Química, Biologia..."></textarea></div>
+    <div class="fg"><label class="fl">Carga Horária Total (opcional)</label><input id="cur-h" class="fi" type="text" placeholder="Ex: 40h"></div>
   `,[
     {l:'Cancelar',c:'bo',fn:()=>{}},
-    {l:'💾 Salvar e Gerar Cronograma',c:'bp',fn:async()=>{
+    {l:'🚀 Iniciar Estudos',c:'btaf',fn:async()=>{
+      const n=document.getElementById('cur-n').value.trim();
+      const d=document.getElementById('cur-d').value;
+      if(!n||!d){toast('Nome e Data são obrigatórios','err');return;}
+      const mats=document.getElementById('cur-m').value.split(',').map(m=>m.trim()).filter(Boolean).map(m=>({nome:m,feita:false}));
+      const id = await dbAdd('concursos',{
+        tipo: 'curso',
+        nome: n,
+        orgao: document.getElementById('cur-i').value,
+        dataProva: d,
+        materias: mats,
+        hasTAF: false,
+        criadoEm: Date.now()
+      });
+      await gerarCronogramaAuto(id, mats, false);
+      renderCC(); renderDash(); updateCronoSel();
+      toast('✅ Curso e Cronograma criados!','ok');
+      setTimeout(()=>go('cronograma'),400);
+    }}
+  ]);
+}
+
+async function openAddCC(){
+  showModal('Cadastrar Novo Concurso',`
+    <div style="background:var(--ac-lt);padding:10px;border-radius:8px;margin-bottom:15px;font-size:12px;color:var(--ac);font-weight:600">
+      🏛️ Focado em editais, cargos públicos e TAF.
+    </div>
+    <div class="fg"><label class="fl">Nome do Concurso *</label><input id="cn" class="fi" placeholder="Ex: GCM Maceió 2026"></div>
+    <div class="fg"><label class="fl">Órgão / Instituição</label><input id="co" class="fi" placeholder="Ex: Prefeitura de Maceió"></div>
+    <div class="fg"><label class="fl">Cargo</label><input id="cc" class="fi" placeholder="Ex: Guarda Municipal"></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Data da Prova *</label><input id="cd" class="fi" type="date"></div>
+      <div class="fg"><label class="fl">Hora</label><input id="ch" class="fi" type="time" value="08:00"></div>
+    </div>
+    <div class="fg"><label class="fl">Matérias do Edital (separadas por vírgula)</label><textarea id="cm" class="fi" placeholder="Português, Matemática, Direito..."></textarea></div>
+    <div class="fg"><label class="fl">Possui TAF?</label><select id="ctaf" class="fi"><option value="">Não</option><option value="1">Sim</option></select></div>
+    <div class="fg"><label class="fl">Salário Previsto (R$)</label><input id="cs" class="fi" type="number" placeholder="0.00"></div>
+  `,[
+    {l:'Cancelar',c:'bo',fn:()=>{}},
+    {l:'💾 Salvar Concurso',c:'bp',fn:async()=>{
       const n=document.getElementById('cn').value.trim();
       const d=document.getElementById('cd').value;
-      if(!n){toast('Informe o nome','err');return;}
-      if(!d){toast('Informe a data da prova','err');return;}
+      if(!n||!d){toast('Nome e Data são obrigatórios','err');return;}
       const mats=document.getElementById('cm').value.split(',').map(m=>m.trim()).filter(Boolean).map(m=>({nome:m,feita:false}));
-      await dbAdd('concursos',{nome:n,orgao:document.getElementById('co').value,cargo:document.getElementById('cc').value,status:'Estudando',vagas:+document.getElementById('cv').value||0,salario:document.getElementById('cs').value,dataProva:d,horaProva:document.getElementById('ch').value,inscricaoFim:document.getElementById('ci').value,edital:document.getElementById('ce').value,local:document.getElementById('cl').value,obs:document.getElementById('cob').value,materias:mats,hasTAF:!!document.getElementById('ctaf').value,criadoEm:Date.now()});
-      concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();
-      toast('✅ Concurso cadastrado! Cronograma gerado.','ok');
+      const id = await dbAdd('concursos',{
+        tipo: 'concurso',
+        nome: n,
+        orgao: document.getElementById('co').value,
+        cargo: document.getElementById('cc').value,
+        dataProva: d,
+        horaProva: document.getElementById('ch').value,
+        materias: mats,
+        hasTAF: !!document.getElementById('ctaf').value,
+        salario: document.getElementById('cs').value,
+        criadoEm: Date.now()
+      });
+      await gerarCronogramaAuto(id, mats, !!document.getElementById('ctaf').value);
+      renderCC(); renderDash(); updateCronoSel();
+      toast('✅ Concurso e Cronograma criados!','ok');
       setTimeout(()=>go('cronograma'),400);
     }}
   ]);
@@ -2651,7 +2691,8 @@ async function downloadCadPDF(id){
         .q-num { font-weight: bold; color: #6c5ce7; margin-bottom: 8px; }
         .q-ans { font-weight: bold; color: #10b981; margin-top: 10px; }
         .footer { margin-top: 50px; font-size: 12px; color: #8b90aa; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
-      </style>
+      .active-day{box-shadow:0 0 15px var(--glow);}
+</style>
     </head>
     <body>
       <h1>${c.nome}</h1>
