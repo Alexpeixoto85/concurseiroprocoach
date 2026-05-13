@@ -405,6 +405,106 @@ textarea.fi{resize:vertical;min-height:70px;}
   #topbar{padding:0 11px;}
 }
 @media(max-width:380px){.g3{grid-template-columns:1fr;}.extop .btn.bsm:not(:last-child):not(:nth-last-child(2)){display:none;}}
+
+/* MOBILE OPTIMIZATION - COMPREHENSIVE */
+@media (max-width:768px){
+  :root{--sw:0;--th:56px;}
+  body{height:100vh;}
+  #sb{width:100%;position:fixed;left:0;top:0;transform:translateX(-100%);height:100vh;z-index:200;}
+  #sb.open{transform:translateX(0);}
+  #sbo.open{display:block;}
+  #main{width:100%;}
+  .mbtn{display:block;}
+  #content{padding:16px;height:calc(100vh - var(--th));}
+  .g3{grid-template-columns:repeat(2,1fr);}
+  .g2{grid-template-columns:1fr;}
+  .ga{grid-template-columns:1fr;}
+  .modal{max-width:95vw;padding:16px;}
+  .btn{padding:8px 12px;font-size:12px;}
+  .bsm{padding:4px 8px;font-size:11px;}
+  .sbar{font-size:12px;padding:8px;}
+  .card{padding:12px;}
+  .lrow{padding:8px 10px;gap:8px;}
+  .chip{padding:3px 8px;font-size:11px;}
+  .tag{font-size:10px;padding:2px 6px;}
+  .toast{max-width:calc(100vw - 32px);}
+  #tbox{bottom:12px;right:12px;}
+  .tbt{font-size:14px;}
+  .stitle{font-size:15px;}
+  .sh{flex-direction:column;gap:8px;}
+  .shr{width:100%;}
+  .scard{padding:12px 14px;}
+  .sval{font-size:20px;}
+  .empty{padding:32px 14px;}
+  .eic{font-size:32px;}
+  .et{font-size:14px;}
+  .es{font-size:11px;}
+  .mact{flex-direction:column;}
+  .mact .btn{width:100%;}
+  .exqa{padding:16px 14px;}
+  .exsidebar{width:100%;max-height:200px;border-top:1px solid var(--border);overflow-x:auto;}
+  .navgrid{display:flex;flex-wrap:wrap;gap:4px;}
+  .nq{padding:6px 8px;font-size:10px;}
+}
+
+@media (max-width:480px){
+  :root{--r:8px;--rsm:6px;}
+  #topbar{padding:0 12px;gap:8px;}
+  #content{padding:12px;}
+  .btn{padding:6px 10px;font-size:11px;}
+  .bsm{padding:3px 6px;font-size:10px;}
+  .card{padding:10px;}
+  .modal{padding:14px;max-width:98vw;}
+  .mtitle{font-size:14px;}
+  .mbody{font-size:12px;}
+  .sbar{padding:6px 10px;font-size:12px;}
+  .lrow{padding:6px 8px;font-size:12px;}
+  .tag{font-size:9px;padding:2px 5px;}
+  .chip{padding:2px 6px;font-size:10px;}
+  .stitle{font-size:14px;}
+  .sval{font-size:18px;}
+  .slbl{font-size:10px;}
+  .g3{grid-template-columns:1fr;}
+  .sh{gap:6px;}
+  .shr{gap:4px;}
+  .scard{padding:10px 12px;}
+  .empty{padding:24px 10px;}
+  .eic{font-size:28px;margin-bottom:6px;}
+  .et{font-size:13px;margin-bottom:3px;}
+  .es{font-size:10px;}
+  .divider{margin:10px 0;}
+  .chr{gap:6px;margin-bottom:6px;}
+  .chl{min-width:80px;font-size:11px;}
+  .chv{min-width:30px;font-size:11px;}
+  textarea.fi{min-height:60px;}
+  .codeblock{font-size:10px;padding:8px;}
+  .tbell,.tbav{width:28px;height:28px;font-size:12px;}
+  .ni{padding:6px 14px;font-size:12px;}
+  .logo{padding:12px 14px;}
+  .uc{padding:10px 14px;}
+  .uname{font-size:12px;}
+  .ulvl{font-size:10px;}
+  .ucoins{font-size:10px;}
+  .nlbl{font-size:9px;padding:7px 14px 2px;}
+  .uav{width:30px;height:30px;font-size:11px;}
+  .logo-ic{width:30px;height:30px;font-size:15px;}
+  .logo-txt{font-size:11px;}
+  .mact{flex-direction:column;}
+  .mact .btn{width:100%;margin-bottom:6px;}
+  .exqa{padding:12px 10px;}
+  .qtxt{font-size:14px;line-height:1.6;margin-bottom:16px;}
+  .opt{padding:10px;margin-bottom:8px;}
+  .olt{font-size:14px;}
+  .extimer{font-size:16px;}
+  .extop{padding:0 8px;}
+  .nq{padding:4px 6px;font-size:9px;}
+}
+
+@media (min-width:769px) and (max-width:1024px){
+  .g3{grid-template-columns:repeat(2,1fr);}
+  .ga{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
+  #content{padding:18px;}
+}
 </style>
 <script src="https://www.youtube.com/iframe_api">
 // ══════════════════════════════════════════════════════════
@@ -2082,9 +2182,15 @@ async function finishExam(){
   clearInterval(timerID);
   clearInterval(autoSaveInterval);
   const qs=examSim.questoes;
-  let cor=0;
+  let cor=0,err=0,naoResp=0;
   qs.forEach((_,i)=>{
-    if(answers[i]===qs[i].gabarito)cor++;
+    if(answers[i]===undefined){
+      naoResp++;
+    }else if(answers[i]===qs[i].gabarito){
+      cor++;
+    }else{
+      err++;
+    }
   });
   const score=(cor/qs.length)*100;
   const res={
@@ -2093,17 +2199,19 @@ async function finishExam(){
     materia:examSim.materia,
     score,
     corrects:cor,
+    errors:err,
+    notAnswered:naoResp,
     total:qs.length,
     seconds:secs,
     answers:{...answers},
-    date:Date.now()
+    date:Date.now(),
+    status:'Finalizado'
   };
   await dbAdd('resultados',res);
   const s=examSim;
   s.plays=(s.plays||0)+1;
   if(s.bestScore===null||score>s.bestScore)s.bestScore=score;
   await dbPut('simulados',s);
-  // ✨ Remove a sessão salva após finalizar
   await clearExamSession(examSim.id);
   sims=await dbAll('simulados');
   results=await dbAll('resultados');
@@ -2114,14 +2222,39 @@ async function finishExam(){
 function closeExam(){
   clearInterval(timerID);
   clearInterval(autoSaveInterval);
-  // Salva automaticamente antes de fechar
   saveExamSession();
   document.getElementById('exov').classList.remove('active');
-  toast('💾 Progresso salvo! Você pode retomar depois.','ok');
+  toast('💾 Progresso salvo! Simulado em aberto.','ok');
 }
 
 // RESULT
-function showResult(r){const pct=Math.round(r.score);document.getElementById('respct').textContent=pct+'%';document.getElementById('resverdict').textContent=pct>=70?'🎉 Excelente!':pct>=50?'👍 Bom resultado!':'💪 Continue praticando!';const m=Math.floor(r.seconds/60),s=r.seconds%60;document.getElementById('resstats').innerHTML=`<div style="text-align:center"><div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--ok)">${r.corrects}</div><div style="font-size:11px;color:var(--muted);font-weight:600">Acertos</div></div><div style="text-align:center"><div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--err)">${r.total-r.corrects}</div><div style="font-size:11px;color:var(--muted);font-weight:600">Erros</div></div><div style="text-align:center"><div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800">${r.total}</div><div style="font-size:11px;color:var(--muted);font-weight:600">Total</div></div><div style="text-align:center"><div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800">${m}m ${s}s</div><div style="font-size:11px;color:var(--muted);font-weight:600">Tempo</div></div>`;const qs=examSim?.questoes||[];document.getElementById('resbreak').innerHTML=qs.map((q,i)=>{const a=r.answers[i],ok=a===q.gabarito,aL=a!==undefined?String.fromCharCode(65+a):'—',gL=q.gabarito_letra||String.fromCharCode(65+q.gabarito);return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><div style="font-weight:700;min-width:65px">Q${q.numero}</div><div style="min-width:85px;color:${ok?'var(--ok)':'var(--err)'}">${ok?'✅ Acerto':'❌ Erro'}</div><div style="color:var(--muted)">Resp: <strong>${aL}</strong> · Gab: <strong>${gL}</strong></div></div>`;}).join('');document.getElementById('resov').style.display='block';}
+function showResult(r){
+  const pct=Math.round(r.score);
+  document.getElementById('respct').textContent=pct+'%';
+  document.getElementById('resverdict').textContent=pct>=70?'🎉 Excelente!':pct>=50?'👍 Bom resultado!':'💪 Continue praticando!';
+  const m=Math.floor(r.seconds/60),s=r.seconds%60;
+  const naoResp=r.notAnswered||0;
+  document.getElementById('resstats').innerHTML=`<div style="text-align:center"><div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--ok)">${r.corrects}</div><div style="font-size:11px;color:var(--muted);font-weight:600">Acertos</div></div><div style="text-align:center"><div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--err)">${r.errors||r.total-r.corrects}</div><div style="font-size:11px;color:var(--muted);font-weight:600">Erros</div></div><div style="text-align:center"><div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--warn)">${naoResp}</div><div style="font-size:11px;color:var(--muted);font-weight:600">Não Respondidas</div></div><div style="text-align:center"><div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800">${r.total}</div><div style="font-size:11px;color:var(--muted);font-weight:600">Total</div></div><div style="text-align:center"><div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800">${m}m ${s}s</div><div style="font-size:11px;color:var(--muted);font-weight:600">Tempo</div></div>`;
+  const qs=examSim?.questoes||[];
+  document.getElementById('resbreak').innerHTML=qs.map((q,i)=>{
+    const a=r.answers[i];
+    let status='',color='';
+    if(a===undefined){
+      status='⚪ Não respondida';
+      color='var(--muted)';
+    }else if(a===q.gabarito){
+      status='✅ Acerto';
+      color='var(--ok)';
+    }else{
+      status='❌ Erro';
+      color='var(--err)';
+    }
+    const aL=a!==undefined?String.fromCharCode(65+a):'—';
+    const gL=q.gabarito_letra||String.fromCharCode(65+q.gabarito);
+    return`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><div style="font-weight:700;min-width:65px">Q${q.numero}</div><div style="min-width:85px;color:${color}">${status}</div><div style="color:var(--muted)">Resp: <strong>${aL}</strong> · Gab: <strong>${gL}</strong></div></div>`;
+  }).join('');
+  document.getElementById('resov').style.display='block';
+}
 function closeResult(){document.getElementById('resov').style.display='none';go('dashboard');}
 function reviewExam(){document.getElementById('resov').style.display='none';if(!examSim)return;revMode=true;qi=0;document.getElementById('exov').classList.add('active');buildNav();renderQE();document.getElementById('exclock').textContent='—:——';['btnRev','btnRev2'].forEach(id=>document.getElementById(id).textContent='✏ Responder');}
 
