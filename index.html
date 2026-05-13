@@ -1084,7 +1084,7 @@ let qDF='',vaDF=''; // filtros ativos
 const COLORS=['#6c5ce7','#10b981','#ef4444','#f59e0b','#3b82f6','#ec4899','#8b5cf6','#06b6d4'];
 const ICONS=['📖','⚖️','🏛️','📜','🔬','🧮','📝','🎓','🔎','📑'];
 const DS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-const PTITLES={dashboard:'Dashboard',coach:'Coach Diário',cronograma:'Cronograma de Estudos',concursos:'Concursos & Cursos',videoaulas:'Videoaulas',simulados:'Simulados',questoes:'Questões',flashcards:'Flashcards',taf:'TAF — Treinamento Físico',checklist:'Checklist da Prova',estatisticas:'Estatísticas',configuracoes:'Configurações',ranking:'Rankings',import:'Importar Simulado',cadernos:'Cadernos'};
+const PTITLES={dashboard:'Dashboard',coach:'Coach Diário',cronograma:'Cronograma de Estudos',concursos:'Meus Concursos',cursos:'Meus Cursos',videoaulas:'Videoaulas',simulados:'Simulados',questoes:'Questões',flashcards:'Flashcards',taf:'TAF — Treinamento Físico',checklist:'Checklist da Prova',estatisticas:'Estatísticas',configuracoes:'Configurações',ranking:'Rankings',import:'Importar Simulado',cadernos:'Cadernos'};
 const today=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());};
 const toISO=d=>d.toISOString().split('T')[0];
 const fmtBR=s=>s?new Date(s+'T12:00:00').toLocaleDateString('pt-BR'):'';
@@ -1103,7 +1103,7 @@ function go(id){
   const content=document.getElementById('content');
   if(content)content.scrollTop=0;
   closeSB();
-  ({dashboard:renderDash,coach:renderCoach,cronograma:renderCronograma,concursos:renderCC,videoaulas:renderVA,simulados:renderSims,questoes:renderQ,flashcards:renderFC,taf:renderTAF,checklist:renderCK,estatisticas:renderStats,ranking:()=>renderRank('g'),configuracoes:()=>{},import:renderImpList,cadernos:renderCad})[id]?.();
+  ({dashboard:renderDash,coach:renderCoach,cronograma:renderCronograma,concursos:renderCC,cursos:renderCursos,videoaulas:renderVA,simulados:renderSims,questoes:renderQ,flashcards:renderFC,taf:renderTAF,checklist:renderCK,estatisticas:renderStats,ranking:()=>renderRank('g'),configuracoes:()=>{},import:renderImpList,cadernos:renderCad})[id]?.();
 }
 document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>go(el.dataset.p)));
 document.getElementById('mbtn').addEventListener('click',()=>{document.getElementById('sb').classList.toggle('open');document.getElementById('sbo').classList.toggle('open');});
@@ -1128,7 +1128,7 @@ document.getElementById('mol').addEventListener('click',e=>{if(e.target.id==='mo
 // ══════════════════════════════════════════════════════════
 //  CONCURSOS
 // ══════════════════════════════════════════════════════════
-function handleCCFile(e){[...e.target.files].forEach(f=>{const r=new FileReader();r.onload=async ev=>{try{let d=JSON.parse(ev.target.result);if(!Array.isArray(d))d=[d];for(const x of d){const mats=(x.materias||[]).map(m=>({nome:typeof m==='string'?m:m.nome,feita:m.feita||false}));await dbAdd('concursos',{nome:x.nome||x.titulo||f.name.replace('.json',''),orgao:x.orgao||'',cargo:x.cargo||'',status:x.status||'Estudando',vagas:x.vagas||0,salario:x.salario||'',dataProva:x.dataProva||'',horaProva:x.horaProva||'08:00',inscricaoFim:x.inscricaoFim||'',edital:x.edital||'',local:x.local||'',obs:x.obs||'',materias:mats,hasTAF:x.hasTAF||false,criadoEm:Date.now()});}concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();toast('✅ Concurso(s) importado(s)!','ok');}catch(err){toast('❌ '+err.message,'err');}};r.readAsText(f);});e.target.value='';}
+function handleCCFile(e){[...e.target.files].forEach(f=>{const r=new FileReader();r.onload=async ev=>{try{let d=JSON.parse(ev.target.result);if(!Array.isArray(d))d=[d];for(const x of d){const mats=(x.materias||[]).map(m=>({nome:typeof m==='string'?m:m.nome,feita:m.feita||false}));await dbAdd('concursos',{nome:x.nome||x.titulo||f.name.replace('.json',''),orgao:x.orgao||'',cargo:x.cargo||'',status:x.status||'Estudando',vagas:x.vagas||0,salario:x.salario||'',dataProva:x.dataProva||'',horaProva:x.horaProva||'08:00',inscricaoFim:x.inscricaoFim||'',edital:x.edital||'',local:x.local||'',obs:x.obs||'',materias:mats,hasTAF:x.hasTAF||false,criadoEm:Date.now()});}concursos=await dbAll('concursos');renderCC(); renderCursos();renderDash();updateCronoSel();toast('✅ Concurso(s) importado(s)!','ok');}catch(err){toast('❌ '+err.message,'err');}};r.readAsText(f);});e.target.value='';}
 
 async function openAddCurso(){
   showModal('Cadastrar Novo Curso / Vestibular',`
@@ -1157,7 +1157,7 @@ async function openAddCurso(){
         criadoEm: Date.now()
       });
       await gerarCronogramaAuto(id, mats, false);
-      renderCC(); renderDash(); updateCronoSel();
+      renderCC(); renderCursos(); renderDash(); updateCronoSel();
       toast('✅ Curso e Cronograma criados!','ok');
       setTimeout(()=>go('cronograma'),400);
     }}
@@ -1199,7 +1199,7 @@ async function openAddCC(){
         criadoEm: Date.now()
       });
       await gerarCronogramaAuto(id, mats, !!document.getElementById('ctaf').value);
-      renderCC(); renderDash(); updateCronoSel();
+      renderCC(); renderCursos(); renderDash(); updateCronoSel();
       toast('✅ Concurso e Cronograma criados!','ok');
       setTimeout(()=>go('cronograma'),400);
     }}
@@ -1208,51 +1208,66 @@ async function openAddCC(){
 
 async function renderCC(){
   concursos=await dbAll('concursos');
+  const list = concursos.filter(c => c.tipo === 'concurso');
   const el=document.getElementById('cc-list');
-  if(!concursos.length){el.innerHTML='<div class="empty"><div class="eic">🎯</div><div class="et">Nenhum concurso cadastrado</div><div class="es">Cadastre ou importe seu primeiro concurso</div><button class="btn bp" onclick="openAddCC()">+ Cadastrar</button></div>';return;}
-  el.innerHTML='<div class="ga">'+concursos.map(c=>{
-    const dias=c.dataProva?diffD(c.dataProva,toISO(today())):null;
-    const cls=dias===null?'':dias<=0?'urg':dias<=14?'urg':dias<=30?'sn':'gd';
-    const prog=c.materias?.length?Math.round((c.materias.filter(m=>m.feita).length/c.materias.length)*100):0;
-    return`<div class="cc">
-      <div class="cct">
-        <div style="font-size:26px;flex-shrink:0">🎯</div>
-        <div>
-          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:13px;line-height:1.3">${c.nome}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.cargo||c.orgao||''}</div>
-        </div>
-      </div>
-      <div class="ccb">
-        ${dias!==null?`<div><div class="ccd ${cls}">${dias>0?dias+' dias':dias===0?'🔴 HOJE!':'✔ Encerrado'}</div><div style="font-size:11px;color:var(--muted)">${c.dataProva?fmtBR(c.dataProva):''}${c.horaProva?' às '+c.horaProva:''}</div></div>`:''}
-        <div style="display:flex;flex-wrap:wrap;gap:5px">
-          ${c.vagas?`<span class="tag tinfo">👥 ${c.vagas} vagas</span>`:''}
-          ${c.salario?`<span class="tag tok">💰 R$${parseFloat(c.salario).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
-          ${c.hasTAF?`<span class="tag ttaf">🏃 TAF</span>`:''}
-          ${c.local?`<span class="tag tac">📍 ${c.local}</span>`:''}
-        </div>
-        ${c.materias?.length?`
-          <div>
-            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Matérias: ${c.materias.filter(m=>m.feita).length}/${c.materias.length} (${prog}%)</div>
-            <div class="pt" style="margin-bottom:8px"><div class="pf" style="width:${prog}%"></div></div>
-            ${c.materias.map((m,mi)=>`<div class="matitem">
-              <div class="matcb ${m.feita?'on':''}" onclick="toggleMat(${c.id},${mi})"></div>
-              <span style="${m.feita?'text-decoration:line-through;color:var(--muted)':''}">${m.nome}</span>
-            </div>`).join('')}
-          </div>`:''}
-        ${c.inscricaoFim?`<div style="font-size:11px;color:var(--muted)">📋 Inscrição até: ${fmtBR(c.inscricaoFim)}</div>`:''}
-        ${c.obs?`<div style="font-size:11px;color:var(--muted);background:var(--bg);padding:7px;border-radius:6px;line-height:1.5">${c.obs.substring(0,120)}${c.obs.length>120?'…':''}</div>`:''}
-      </div>
-      <div class="ccf">
-        ${c.edital?`<a href="${c.edital}" target="_blank" class="btn bo bsm">📄 Edital</a>`:''}
-        <button class="btn bp bsm" onclick="go('cronograma')">📅 Cronograma</button>
-        ${c.hasTAF?`<button class="btn btaf bsm" onclick="go('taf')">🏃 TAF</button>`:''}
-        <button class="btn bd bsm" onclick="delCC(${c.id})" style="margin-left:auto">🗑</button>
-      </div>
-    </div>`;
-  }).join('')+'</div>';
+  if(!list.length){el.innerHTML='<div class="empty"><div class="eic">🏛️</div><div class="et">Nenhum concurso cadastrado</div><button class="btn bp" onclick="openAddCC()">+ Cadastrar Concurso</button></div>';return;}
+  el.innerHTML='<div class="ga">'+list.map(c=>renderCardItem(c)).join('')+'</div>';
 }
-async function toggleMat(cid,mi){const c=await dbGet('concursos',cid);c.materias[mi].feita=!c.materias[mi].feita;await dbPut('concursos',c);concursos=await dbAll('concursos');renderCC();}
-async function delCC(id){showModal('Remover Concurso','Tem certeza? Os dados serão apagados.',[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Remover',c:'bd',fn:async()=>{await dbDel('concursos',id);concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();toast('Concurso removido');}}]);}
+
+async function renderCursos(){
+  concursos=await dbAll('concursos');
+  const list = concursos.filter(c => c.tipo === 'curso');
+  const el=document.getElementById('cursos-list');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="eic">🎓</div><div class="et">Nenhum curso cadastrado</div><button class="btn btaf" onclick="openAddCurso()">+ Cadastrar Curso</button></div>';return;}
+  el.innerHTML='<div class="ga">'+list.map(c=>renderCardItem(c)).join('')+'</div>';
+}
+
+function renderCardItem(c){
+  const dias=c.dataProva?diffD(c.dataProva,toISO(today())):null;
+  const cls=dias===null?'':dias<=0?'urg':dias<=14?'urg':dias<=30?'sn':'gd';
+  const prog=c.materias?.length?Math.round((c.materias.filter(m=>m.feita).length/c.materias.length)*100):0;
+  const isCurso = c.tipo === 'curso';
+  const icon = isCurso ? '🎓' : '🏛️';
+  const colorClass = isCurso ? 'btaf' : 'bp';
+  
+  return `<div class="cc">
+    <div class="cct">
+      <div style="font-size:26px;flex-shrink:0">${icon}</div>
+      <div>
+        <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:13px;line-height:1.3">${c.nome}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.cargo||c.orgao||''}</div>
+      </div>
+    </div>
+    <div class="ccb">
+      ${dias!==null?`<div><div class="ccd ${cls}">${dias>0?dias+' dias':dias===0?'🔴 HOJE!':'✔ Encerrado'}</div><div style="font-size:11px;color:var(--muted)">${c.dataProva?fmtBR(c.dataProva):''}${c.horaProva?' às '+c.horaProva:''}</div></div>`:''}
+      <div style="display:flex;flex-wrap:wrap;gap:5px">
+        ${c.vagas?`<span class="tag tinfo">👥 ${c.vagas} vagas</span>`:''}
+        ${c.salario?`<span class="tag tok">💰 R$${parseFloat(c.salario).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
+        ${c.hasTAF?`<span class="tag ttaf">🏃 TAF</span>`:''}
+        ${c.local?`<span class="tag tac">📍 ${c.local}</span>`:''}
+      </div>
+      ${c.materias?.length?`
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Progresso: ${c.materias.filter(m=>m.feita).length}/${c.materias.length} (${prog}%)</div>
+          <div class="pt" style="margin-bottom:8px"><div class="pf" style="width:${prog}%"></div></div>
+          ${c.materias.map((m,mi)=>`<div class="matitem">
+            <div class="matcb ${m.feita?'on':''}" onclick="toggleMat(${c.id},${mi})"></div>
+            <span style="${m.feita?'text-decoration:line-through;color:var(--muted)':''}">${m.nome}</span>
+          </div>`).join('')}
+        </div>`:''}
+      ${c.inscricaoFim?`<div style="font-size:11px;color:var(--muted)">📋 Inscrição até: ${fmtBR(c.inscricaoFim)}</div>`:''}
+      ${c.obs?`<div style="font-size:11px;color:var(--muted);background:var(--bg);padding:7px;border-radius:6px;line-height:1.5">${c.obs.substring(0,120)}${c.obs.length>120?'…':''}</div>`:''}
+    </div>
+    <div class="ccf">
+      ${c.edital?`<a href="${c.edital}" target="_blank" class="btn bo bsm">📄 Edital</a>`:''}
+      <button class="btn ${colorClass} bsm" onclick="go('cronograma')">📅 Cronograma</button>
+      ${c.hasTAF?`<button class="btn btaf bsm" onclick="go('taf')">🏃 TAF</button>`:''}
+      <button class="btn bd bsm" onclick="delCC(${c.id})" style="margin-left:auto">🗑</button>
+    </div>
+  </div>`;
+}
+async function toggleMat(cid,mi){const c=await dbGet('concursos',cid);c.materias[mi].feita=!c.materias[mi].feita;await dbPut('concursos',c);concursos=await dbAll('concursos');renderCC(); renderCursos();}
+async function delCC(id){showModal('Remover Concurso','Tem certeza? Os dados serão apagados.',[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Remover',c:'bd',fn:async()=>{await dbDel('concursos',id);concursos=await dbAll('concursos');renderCC(); renderCursos();renderDash();updateCronoSel();toast('Concurso removido');}}]);}
 
 // ══════════════════════════════════════════════════════════
 //  CRONOGRAMA
@@ -2909,7 +2924,7 @@ async function handleCCFile(e){
         criadoEm:Date.now()
       });
       concursos=await dbAll('concursos');
-      renderCC();renderDash();updateCronoSel();
+      renderCC(); renderCursos();renderDash();updateCronoSel();
       toast(`✅ Concurso "${d.nome}" importado com sucesso!`,'ok');
       setTimeout(()=>go('cronograma'),500);
     }catch(err){
