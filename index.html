@@ -2096,13 +2096,9 @@ async function getActiveSessions(){
 async function startExam(id){
   const s=await dbGet('simulados',id);
   if(!s||!s.questoes.length){toast('Simulado sem questões!','err');return;}
-  
-  // Verifica se há uma sessão anterior em andamento
   const sessions=await getActiveSessions();
   const existingSession=sessions.find(sess=>sess.simuladoId===id);
-  
   if(existingSession){
-    // Mostra opção de retomar ou começar novo
     const timeElapsed=Math.floor(existingSession.elapsedSeconds/60);
     const questionsAnswered=Object.keys(existingSession.answers||{}).length;
     showModal('Retomar Simulado?',
@@ -2127,6 +2123,7 @@ async function startExam(id){
             buildNav();
             renderQE();
             startClock();
+            setupAutoSave();
             toast('✅ Sessão retomada!','ok');
           }else{
             toast('❌ Erro ao retomar sessão','err');
@@ -2154,7 +2151,47 @@ function initExam(s){
   setupAutoSave();
 }
 function buildNav(){document.getElementById('navgrid').innerHTML=examSim.questoes.map((_,i)=>`<button class="nq ${i===qi?'cur':''}" onclick="jumpQ(${i})">${i+1}</button>`).join('');}
-function renderQE(){const q=examSim.questoes[qi],tot=examSim.questoes.length;document.getElementById('qtag').textContent='Questão '+q.numero;document.getElementById('exprog').textContent=`Questão ${qi+1} de ${tot}`;document.getElementById('qtxt').textContent=q.enunciado;document.getElementById('btnPrev').disabled=qi===0;const ans=Object.keys(answers).length;document.getElementById('cntA').textContent=ans;document.getElementById('cntB').textContent=tot-ans;document.getElementById('qopts').innerHTML=q.opcoes.map((o,i)=>{let c='';if(revMode){if(i===q.gabarito)c='cor';else if(answers[qi]===i)c='wrg';}else if(answers[qi]===i)c='sel';return`<div class="opt ${c}" onclick="pickOpt(${i})"><div class="olt">${String.fromCharCode(65+i)}</div><div>${o}</div></div>`;}).join('');const eb=document.getElementById('explbox');if(revMode){const gl=q.gabarito_letra||String.fromCharCode(65+q.gabarito);document.getElementById('expltxt').innerHTML=`<strong>Gabarito: ${gl}</strong> — ${q.opcoes[q.gabarito]}`+(q.explicacao?`<br><br>${q.explicacao}`:'');eb.classList.add('vis');}else eb.classList.remove('vis');updateNav();}
+function renderQE(){
+  const q=examSim.questoes[qi],tot=examSim.questoes.length;
+  document.getElementById('qtag').textContent='Questão '+q.numero;
+  document.getElementById('exprog').textContent=`Questão ${qi+1} de ${tot}`;
+  document.getElementById('qtxt').textContent=q.enunciado;
+  document.getElementById('btnPrev').disabled=qi===0;
+  
+  // Estatísticas Dinâmicas (Baseadas em Respondidas)
+  const ansKeys = Object.keys(answers);
+  const totalRespondidas = ansKeys.length;
+  let acertosParciais = 0;
+  ansKeys.forEach(idx => {
+    if(answers[idx] === examSim.questoes[idx].gabarito) acertosParciais++;
+  });
+  const errosParciais = totalRespondidas - acertosParciais;
+  const aproveitamento = totalRespondidas > 0 ? Math.round((acertosParciais/totalRespondidas)*100) : 0;
+  
+  document.getElementById('cntA').textContent = acertosParciais;
+  document.getElementById('cntB').textContent = tot - totalRespondidas;
+  
+  // Atualizar cabeçalho de estatísticas se existir ou via toast/label
+  // Vamos injetar o aproveitamento no texto de progresso
+  document.getElementById('exprog').innerHTML = `Questão ${qi+1} de ${tot} <span style="margin-left:10px;color:var(--ac)">📊 Aproveitamento: ${aproveitamento}% (${acertosParciais}/${totalRespondidas})</span>`;
+
+  document.getElementById('qopts').innerHTML=q.opcoes.map((o,i)=>{
+    let c='';
+    if(revMode){
+      if(i===q.gabarito)c='cor';
+      else if(answers[qi]===i)c='wrg';
+    }else if(answers[qi]===i)c='sel';
+    return`<div class="opt ${c}" onclick="pickOpt(${i})"><div class="olt">${String.fromCharCode(65+i)}</div><div>${o}</div></div>`;
+  }).join('');
+  
+  const eb=document.getElementById('explbox');
+  if(revMode){
+    const gl=q.gabarito_letra||String.fromCharCode(65+q.gabarito);
+    document.getElementById('expltxt').innerHTML=`<strong>Gabarito: ${gl}</strong> — ${q.opcoes[q.gabarito]}`+(q.explicacao?`<br><br>${q.explicacao}`:'');
+    eb.classList.add('vis');
+  }else eb.classList.remove('vis');
+  updateNav();
+}
 function updateNav(){document.querySelectorAll('.nq').forEach((b,i)=>{b.className='nq';if(i===qi)b.classList.add('cur');else if(revMode&&answers[i]!==undefined)b.classList.add(answers[i]===examSim.questoes[i].gabarito?'cor':'err');else if(answers[i]!==undefined)b.classList.add('ans');});}
 function pickOpt(i){if(revMode)return;answers[qi]=i;renderQE();}
 function jumpQ(i){qi=i;renderQE();}
@@ -2261,8 +2298,42 @@ function reviewExam(){document.getElementById('resov').style.display='none';if(!
 // ══════════════════════════════════════════════════════════
 //  QUESTÕES
 // ══════════════════════════════════════════════════════════
-async function renderQ(q='',disc=''){sims=await dbAll('simulados');allQ=sims.flatMap(s=>s.questoes.map(qq=>({...qq,_st:s.titulo,_sid:s.id})));const discs=[...new Set(allQ.map(q=>q.disciplina).filter(Boolean))];document.getElementById('q-chips').innerHTML=`<div class="chip ${!disc?'on':''}" onclick="qDF='';filterQ()">Todas</div>`+discs.map(d=>`<div class="chip ${disc===d?'on':''}" onclick="qDF=${JSON.stringify(d)};filterQ()">${d}</div>`).join('');let list=allQ;if(q)list=list.filter(x=>x.enunciado?.toLowerCase().includes(q.toLowerCase()));if(disc)list=list.filter(x=>x.disciplina===disc);const el=document.getElementById('q-list');if(!list.length){el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="eic">📝</div><div class="et">Nenhuma questão</div><button class="btn bp" style="margin-top:11px" onclick="go(\'import\')">📥 Importar</button></div>';return;}el.innerHTML=list.slice(0,40).map(q=>`<div class="card chov" onclick='quickQ(${JSON.stringify(JSON.stringify(q))})'><div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px"><span class="tag tac">${q.disciplina||'Geral'}</span><span class="tag tinfo">Q${q.numero}</span></div><div style="font-size:13px;line-height:1.6;color:var(--txt2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${q.enunciado}</div><div style="margin-top:7px;font-size:11px;color:var(--muted)">📋 ${q._st}</div></div>`).join('');}
-function filterQ(){renderQ(document.getElementById('q-s').value,qDF);}
+async function renderQ(q='',disc=''){
+  sims=await dbAll('simulados');
+  allQ=sims.flatMap(s=>s.questoes.map(qq=>({...qq,_st:s.titulo,_sid:s.id})));
+  
+  // Corrigir a lista de disciplinas únicas
+  const discs=[...new Set(allQ.map(q=>q.disciplina).filter(Boolean))].sort();
+  
+  const chipsEl = document.getElementById('q-chips');
+  if(chipsEl) {
+    chipsEl.innerHTML=`<div class="chip ${!disc?'on':''}" onclick="qDF='';filterQ()">Todas</div>`+
+      discs.map(d=>`<div class="chip ${disc===d?'on':''}" onclick="qDF='${d.replace(/'/g, "\'")}';filterQ()">${d}</div>`).join('');
+  }
+  
+  let list=allQ;
+  if(q) list=list.filter(x=>x.enunciado?.toLowerCase().includes(q.toLowerCase()));
+  if(disc) list=list.filter(x=>x.disciplina===disc);
+  
+  const el=document.getElementById('q-list');
+  if(!list.length){
+    el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="eic">📝</div><div class="et">Nenhuma questão encontrada</div><button class="btn bp" style="margin-top:11px" onclick="go(\'import\')">📥 Importar</button></div>';
+    return;
+  }
+  
+  el.innerHTML=list.slice(0,100).map(q=>`<div class="card chov" onclick='quickQ(${JSON.stringify(JSON.stringify(q))})'>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px">
+      <span class="tag tac">${q.disciplina||'Geral'}</span>
+      <span class="tag tinfo">Q${q.numero}</span>
+    </div>
+    <div style="font-size:13px;line-height:1.6;color:var(--txt2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${q.enunciado}</div>
+    <div style="margin-top:7px;font-size:11px;color:var(--muted)">📋 ${q._st}</div>
+  </div>`).join('');
+}
+function filterQ(){
+  const searchVal = document.getElementById('q-s').value;
+  renderQ(searchVal, qDF);
+}
 function quickQ(js){const q=JSON.parse(js);showModal(q.disciplina||'Questão',`<div style="font-size:14px;line-height:1.8;margin-bottom:13px">${q.enunciado}</div>${q.opcoes.map((o,i)=>`<div style="padding:7px 11px;margin-bottom:5px;border-radius:7px;background:var(--bg);font-size:13px"><strong>${String.fromCharCode(65+i)})</strong> ${o}</div>`).join('')}<div style="margin-top:12px;padding:11px;background:var(--ok-lt);border:1px solid var(--ok);border-radius:8px;font-size:13px"><strong style="color:var(--ok)">Gabarito: ${q.gabarito_letra||String.fromCharCode(65+q.gabarito)}</strong>${q.explicacao?'<br><br>'+q.explicacao:''}</div>`,[{l:'Fechar',c:'bo',fn:()=>{}}]);}
 function randomQ(){if(!allQ.length){toast('Importe um simulado primeiro','err');return;}quickQ(JSON.stringify(allQ[Math.floor(Math.random()*allQ.length)]));}
 
