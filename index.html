@@ -1167,6 +1167,7 @@ const dbDel=(s,k)=>new Promise((ok,f)=>{const r=T(s,'readwrite').delete(k);r.ons
 //  State & helpers
 // ══════════════════════════════════════════════════════════
 let sims=[],results=[],vids=[],concursos=[],cursos=[],allQ=[];
+let filterRefType='', filterRefId=null;
 let user={key:'profile',name:'Estudante',xp:20,level:1,coins:7660};
 let examSim=null,qi=0,answers={},revMode=false,secs=0,timerID=null;
 let autoSaveInterval=null; // Para salvar automaticamente o progresso
@@ -1193,7 +1194,24 @@ function go(id){
   const content=document.getElementById('content');
   if(content)content.scrollTop=0;
   closeSB();
-  ({dashboard:renderDash,coach:renderCoach,cronograma:renderCronograma,concursos:renderCC,cursos:renderCursos,videoaulas:renderVA,simulados:renderSims,questoes:renderQ,flashcards:renderFC,taf:renderTAF,checklist:renderCK,estatisticas:renderStats,ranking:()=>renderRank('g'),configuracoes:()=>{},import:renderImpList,cadernos:renderCad})[id]?.();
+  ({
+    dashboard: renderDash,
+    coach: renderCoach,
+    cronograma: renderCronograma,
+    concursos: renderCC,
+    cursos: renderCursos,
+    videoaulas: () => renderVA('', vaDF, filterRefType, filterRefId),
+    simulados: () => renderSims('', filterRefType, filterRefId),
+    flashcards: () => renderFCDecks(filterRefType, filterRefId),
+    questoes: renderQ,
+    taf: renderTAF,
+    checklist: renderCK,
+    estatisticas: renderStats,
+    ranking: () => renderRank('g'),
+    configuracoes: () => {},
+    import: renderImpList,
+    cadernos: renderCad
+  })[id]?.();
 }
 document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>go(el.dataset.p)));
 document.getElementById('mbtn').addEventListener('click',()=>{document.getElementById('sb').classList.toggle('open');document.getElementById('sbo').classList.toggle('open');});
@@ -1311,9 +1329,11 @@ async function renderCC(){
         ${c.inscricaoFim?`<div style="font-size:11px;color:var(--muted)">📋 Inscrição até: ${fmtBR(c.inscricaoFim)}</div>`:''}
         ${c.obs?`<div style="font-size:11px;color:var(--muted);background:var(--bg);padding:7px;border-radius:6px;line-height:1.5">${c.obs.substring(0,120)}${c.obs.length>120?'…':''}</div>`:''}
       </div>
-      <div class="ccf">
+      <div class="ccf" style="flex-wrap:wrap">
+        <button class="btn bp bsm" onclick="filterRefType='concurso';filterRefId=${c.id};go('videoaulas')">🎬 Aulas</button>
+        <button class="btn bok bsm" onclick="filterRefType='concurso';filterRefId=${c.id};go('simulados')">📋 Simulados</button>
         ${c.edital?`<a href="${c.edital}" target="_blank" class="btn bo bsm">📄 Edital</a>`:''}
-        <button class="btn bp bsm" onclick="go('cronograma')">📅 Cronograma</button>
+        <button class="btn bo bsm" onclick="editCC(${c.id})">✏️ Editar</button><button class="btn bo bsm" onclick="go('cronograma')">📅 Cronograma</button>
         ${c.hasTAF?`<button class="btn btaf bsm" onclick="go('taf')">🏃 TAF</button>`:''}
         <button class="btn bd bsm" onclick="delCC(${c.id})" style="margin-left:auto">🗑</button>
       </div>
@@ -1321,6 +1341,66 @@ async function renderCC(){
   }).join('')+'</div>';
 }
 async function toggleMat(cid,mi){const c=await dbGet('concursos',cid);c.materias[mi].feita=!c.materias[mi].feita;await dbPut('concursos',c);concursos=await dbAll('concursos');renderCC();}
+
+async function editCC(id){
+  const c=await dbGet('concursos',id);
+  if(!c)return;
+  const matsTxt = (c.materias||[]).map(m=>m.nome).join(', ');
+  showModal('Editar Concurso',`
+    <div class="fg"><label class="fl">Nome do concurso *</label><input id="cn" class="fi" value="${c.nome.replace(/"/g,'&quot;')}"></div>
+    <div class="fg"><label class="fl">Órgão / Instituição</label><input id="co" class="fi" value="${(c.orgao||'').replace(/"/g,'&quot;')}"></div>
+    <div class="fg"><label class="fl">Cargo</label><input id="cc" class="fi" value="${(c.cargo||'').replace(/"/g,'&quot;')}"></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Data da prova *</label><input id="cd" class="fi" type="date" value="${c.dataProva||''}"></div>
+      <div class="fg"><label class="fl">Hora da prova</label><input id="ch" class="fi" type="time" value="${c.horaProva||'08:00'}"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Fim das inscrições</label><input id="ci" class="fi" type="date" value="${c.inscricaoFim||''}"></div>
+      <div class="fg"><label class="fl">Local da prova</label><input id="cl" class="fi" value="${(c.local||'').replace(/"/g,'&quot;')}"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Salário (R$)</label><input id="cs" class="fi" type="number" step="0.01" value="${c.salario||''}"></div>
+      <div class="fg"><label class="fl">Nº de vagas</label><input id="cv" class="fi" type="number" value="${c.vagas||0}"></div>
+    </div>
+    <div class="fg"><label class="fl">Matérias do edital (separadas por vírgula)</label><textarea id="cm" class="fi">${matsTxt}</textarea></div>
+    <div class="fg"><label class="fl">Inclui TAF?</label><select id="ctaf" class="fi"><option value="">Não</option><option value="1" ${c.hasTAF?'selected':''}>Sim</option></select></div>
+    <div class="fg"><label class="fl">Link do edital</label><input id="ce" class="fi" type="url" value="${c.edital||''}"></div>
+    <div class="fg"><label class="fl">Observações / Banca</label><textarea id="cob" class="fi">${(c.obs||'').replace(/</g,'&lt;')}</textarea></div>
+  `,[
+    {l:'Cancelar',c:'bo',fn:()=>{}},
+    {l:'💾 Salvar Alterações',c:'bp',fn:async()=>{
+      const n=document.getElementById('cn').value.trim();
+      if(!n){toast('Informe o nome','err');return;}
+      c.nome=n;
+      c.orgao=document.getElementById('co').value;
+      c.cargo=document.getElementById('cc').value;
+      c.dataProva=document.getElementById('cd').value;
+      c.horaProva=document.getElementById('ch').value;
+      c.inscricaoFim=document.getElementById('ci').value;
+      c.local=document.getElementById('cl').value;
+      c.salario=document.getElementById('cs').value;
+      c.vagas=+document.getElementById('cv').value||0;
+      c.hasTAF=!!document.getElementById('ctaf').value;
+      c.edital=document.getElementById('ce').value;
+      c.obs=document.getElementById('cob').value;
+      
+      const novasMats=document.getElementById('cm').value.split(',').map(m=>m.trim()).filter(Boolean);
+      const matsAtualizadas = novasMats.map(nm => {
+        const oldM = (c.materias||[]).find(m=>m.nome===nm);
+        return {nome: nm, feita: oldM ? oldM.feita : false};
+      });
+      c.materias = matsAtualizadas;
+      
+      await dbPut('concursos',c);
+      concursos=await dbAll('concursos');
+      renderCC();
+      renderDash();
+      updateCronoSel();
+      toast('✅ Concurso atualizado!','ok');
+    }}
+  ]);
+}
+
 async function delCC(id){showModal('Remover Concurso','Tem certeza? Os dados serão apagados.',[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Remover',c:'bd',fn:async()=>{await dbDel('concursos',id);concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();toast('Concurso removido');}}]);}
 
 // ══════════════════════════════════════════════════════════
@@ -1944,8 +2024,10 @@ async function renderCursos(){
         ${c.observacoes?`<div style="font-size:11px;color:var(--muted);background:var(--bg);padding:7px;border-radius:6px;line-height:1.5">${c.observacoes.substring(0,140)}${c.observacoes.length>140?'…':''}</div>`:''}
         <div class="course-actions">
           ${c.link?`<a class="btn bp bsm" target="_blank" href="${c.link}">▶ Continuar</a>`:''}
-          <button class="btn bo bsm" onclick="saveCursoProgress(${c.id})">💾 Salvar progresso</button>
-          <button class="btn bo bsm" onclick="editCursoNotes(${c.id})">📝 Notas</button>
+          <button class="btn bp bsm" onclick="filterRefType='curso';filterRefId=${c.id};go('videoaulas')">🎬 Aulas</button>
+          <button class="btn bok bsm" onclick="filterRefType='curso';filterRefId=${c.id};go('simulados')">📋 Simulados</button>
+          <button class="btn bo bsm" onclick="saveCursoProgress(${c.id})">💾 Salvar</button>
+          <button class="btn bo bsm" onclick="editCurso(${c.id})">✏️ Editar</button><button class="btn bo bsm" onclick="editCursoNotes(${c.id})">📝 Notas</button>
           <button class="btn bd bsm" onclick="delCurso(${c.id})">🗑</button>
         </div>
       </div>
@@ -1974,6 +2056,62 @@ async function editCursoNotes(id){
     {l:'Salvar notas',c:'bp',fn:async()=>{c.observacoes=document.getElementById('cunotes').value;c.atualizadoEm=Date.now();await dbPut('cursos',c);renderCursos();toast('✅ Notas salvas','ok');}}
   ]);
 }
+
+async function editCurso(id){
+  const c=await dbGet('cursos',id);
+  if(!c)return;
+  const modsTxt = (c.modulos||[]).map(m => `${m.nome}: ${(m.aulas||[]).map(a=>a.titulo).join('; ')}`).join('\n');
+  showModal('Editar Curso',`
+    <div class="fg"><label class="fl">Nome do curso *</label><input id="cut" class="fi" value="${c.titulo.replace(/"/g,'&quot;')}"></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Plataforma</label><input id="cup" class="fi" value="${(c.plataforma||'').replace(/"/g,'&quot;')}"></div>
+      <div class="fg"><label class="fl">Professor / Instrutor</label><input id="cui" class="fi" value="${(c.professor||'').replace(/"/g,'&quot;')}"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Categoria / Matéria</label><input id="cuc" class="fi" value="${(c.categoria||'').replace(/"/g,'&quot;')}"></div>
+      <div class="fg"><label class="fl">Carga horária (h)</label><input id="cuh" class="fi" type="number" value="${c.cargaHoraria||0}"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Início</label><input id="cud1" class="fi" type="date" value="${c.inicio||''}"></div>
+      <div class="fg"><label class="fl">Prazo / Fim</label><input id="cud2" class="fi" type="date" value="${c.fim||''}"></div>
+    </div>
+    <div class="fg"><label class="fl">Link do curso</label><input id="cul" class="fi" type="url" value="${c.link||''}"></div>
+    <div class="fg"><label class="fl">Módulos e aulas</label><textarea id="cum" class="fi" style="min-height:120px">${modsTxt}</textarea></div>
+    <div class="fg"><label class="fl">Observações</label><textarea id="cuo" class="fi">${(c.observacoes||'').replace(/</g,'&lt;')}</textarea></div>
+  `,[
+    {l:'Cancelar',c:'bo',fn:()=>{}},
+    {l:'💾 Salvar Alterações',c:'bp',fn:async()=>{
+      const titulo=document.getElementById('cut').value.trim();
+      if(!titulo){toast('Informe o nome do curso','err');return;}
+      c.titulo = titulo;
+      c.plataforma = document.getElementById('cup').value;
+      c.professor = document.getElementById('cui').value;
+      c.categoria = document.getElementById('cuc').value||'Geral';
+      c.cargaHoraria = +document.getElementById('cuh').value||0;
+      c.inicio = document.getElementById('cud1').value;
+      c.fim = document.getElementById('cud2').value;
+      c.link = document.getElementById('cul').value;
+      c.observacoes = document.getElementById('cuo').value;
+      // Nota: Para não perder o progresso das aulas ao editar módulos via texto, 
+      // uma implementação robusta compararia os nomes. Aqui faremos o parse simples.
+      const novosModulos = parseCursoModulos(document.getElementById('cum').value);
+      // Preservar conclusão se o título da aula for igual
+      novosModulos.forEach(nm => {
+        nm.aulas.forEach(na => {
+          const oldA = (c.modulos||[]).flatMap(m=>m.aulas||[]).find(a=>a.titulo===na.titulo);
+          if(oldA) na.concluida = oldA.concluida;
+        });
+      });
+      c.modulos = novosModulos;
+      c.atualizadoEm = Date.now();
+      await dbPut('cursos',c);
+      cursos=await dbAll('cursos');
+      renderCursos();
+      toast('✅ Curso atualizado!','ok');
+    }}
+  ]);
+}
+
 async function delCurso(id){
   showModal('Remover Curso','Tem certeza? O curso e seu progresso serão apagados.',[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Remover',c:'bd',fn:async()=>{await dbDel('cursos',id);cursos=await dbAll('cursos');renderCursos();toast('Curso removido');}}]);
 }
@@ -2012,6 +2150,21 @@ async function handleCursoFile(e){
 }
 
 // ══════════════════════════════════════════════════════════
+
+function getRefOptions(){
+  let h='<option value="">(Nenhum vínculo)</option><optgroup label="🎯 Concursos">';
+  concursos.forEach(c=>h+=`<option value="concurso:${c.id}">${c.nome}</option>`);
+  h+='</optgroup><optgroup label="🎓 Cursos">';
+  cursos.forEach(c=>h+=`<option value="curso:${c.id}">${c.titulo}</option>`);
+  h+='</optgroup>';
+  return h;
+}
+function parseRef(val){
+  if(!val)return {type:'',id:null};
+  const [t,i]=val.split(':');
+  return {type:t,id:+i};
+}
+
 //  VIDEOAULAS
 // ══════════════════════════════════════════════════════════
 // Extrai ID do YouTube de uma URL
@@ -2161,6 +2314,7 @@ function openAddVideo(){showModal('Adicionar Videoaula',`
   <div class="fg"><label class="fl">Título *</label><input id="vt" class="fi" placeholder="Ex: Aula de Língua Portuguesa"></div>
   <div class="fg"><label class="fl">Matéria</label><input id="vm" class="fi" placeholder="Ex: Língua Portuguesa"></div>
   <div class="fg"><label class="fl">Canal / Professor</label><input id="vc" class="fi" placeholder="Ex: Gran Cursos Online"></div>
+  <div class="fg"><label class="fl">Relacionado a</label><select id="vref" class="fi">${getRefOptions()}</select></div>
   <div class="fg"><label class="fl">Duração (minutos)</label><input id="vd" class="fi" type="number" placeholder="45"></div>
 `,[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Adicionar',c:'bp',fn:async()=>{
   const u=document.getElementById('vu').value.trim();
@@ -2173,17 +2327,18 @@ function openAddVideo(){showModal('Adicionar Videoaula',`
   toast('⏳ Verificando disponibilidade do vídeo...','info');
   const isAvailable=await checkYouTubeAvailability(u);
   if(!isAvailable){toast('🚫 Este vídeo não está disponível no YouTube ou foi removido.','err');return;}
-  await dbAdd('videoaulas',{url:u,titulo:t,materia,canal:document.getElementById('vc').value||'',duracao:+document.getElementById('vd').value||0,done:false,criadoEm:Date.now()});
+  const ref=parseRef(document.getElementById('vref').value);
+  await dbAdd('videoaulas',{url:u,titulo:t,materia,canal:document.getElementById('vc').value||'',refType:ref.type,refId:ref.id,duracao:+document.getElementById('vd').value||0,done:false,criadoEm:Date.now()});
   vids=await dbAll('videoaulas');renderVA();toast('✅ Videoaula adicionada!','ok');
 }}]);}
 
 function getYTThumb(url){try{const m=url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);return m?`https://img.youtube.com/vi/${m[1]}/mqdefault.jpg`:null;}catch{return null;}}
 
-async function renderVA(q='',mat=''){
+async function renderVA(q='',mat='',refType='',refId=null){
   vids=await dbAll('videoaulas');
   const mats=[...new Set(vids.map(v=>v.materia).filter(Boolean))].sort();
   const chipsEl=document.getElementById('va-chips');
-  chipsEl.innerHTML=`<div class="chip ${!mat?'on':''}" onclick="vaDF='';filterVA()">Todas (${vids.length})</div>`
+  const activeRef = refType || filterRefType; const activeId = refId || filterRefId; let h=`<div class="chip ${!mat && !activeRef ?'on':''}" onclick="vaDF='';filterRefType='';filterRefId=null;filterVA()">Todas (${vids.length})</div>`; if(activeRef){ const refObj = activeRef==='curso'?cursos.find(c=>c.id===activeId):concursos.find(c=>c.id===activeId); h+=`<div class="chip on">📍 ${refObj?(refObj.titulo||refObj.nome):'Filtro'} <span onclick="filterRefType='';filterRefId=null;filterVA()" style="margin-left:5px;opacity:.7">✕</span></div>`; } chipsEl.innerHTML=h
     +mats.map(m=>{
       const cnt=vids.filter(v=>v.materia===m).length;
       const safe=m.replace(/'/g,"\\'").replace(/"/g,'&quot;');
@@ -2192,6 +2347,8 @@ async function renderVA(q='',mat=''){
   let list=vids;
   if(q)list=list.filter(v=>v.titulo.toLowerCase().includes(q.toLowerCase())||v.materia?.toLowerCase().includes(q.toLowerCase())||v.canal?.toLowerCase().includes(q.toLowerCase()));
   if(mat)list=list.filter(v=>v.materia===mat);
+  const rT=refType||filterRefType, rI=refId||filterRefId;
+  if(rT&&rI)list=list.filter(v=>v.refType===rT && v.refId===rI);
   const el=document.getElementById('va-list');
   if(!list.length){
     if(mat||q){
@@ -2241,7 +2398,7 @@ async function renderVA(q='',mat=''){
     +'</div>';
   }).join('');
 }
-function filterVA(){renderVA(document.getElementById('va-search').value,vaDF);}
+function filterVA(){renderVA(document.getElementById('va-search').value,vaDF,filterRefType,filterRefId);}
 async function removeInvalidVids(){
   const all=await dbAll('videoaulas');
   const invalid=all.filter(v=>!isValidVideoURL(v.url));
@@ -2327,10 +2484,12 @@ simDZ.addEventListener('dragover',e=>{e.preventDefault();simDZ.classList.add('ov
 simDZ.addEventListener('dragleave',()=>simDZ.classList.remove('over'));
 simDZ.addEventListener('drop',e=>{e.preventDefault();simDZ.classList.remove('over');[...e.dataTransfer.files].filter(f=>f.name.endsWith('.json')).forEach(f=>{const r=new FileReader();r.onload=ev=>handleSimFiles({target:{files:[f]}});r.readAsText(f);});});
 
-async function renderSims(q=''){
+async function renderSims(q='',refType='',refId=null){
   sims=await dbAll('simulados');
   const sessions=await getActiveSessions();
-  let list=q?sims.filter(s=>s.titulo.toLowerCase().includes(q.toLowerCase())):sims;
+  let list=sims; if(q)list=list.filter(s=>s.titulo.toLowerCase().includes(q.toLowerCase()));
+  const rT=refType||filterRefType, rI=refId||filterRefId;
+  if(rT&&rI)list=list.filter(s=>s.refType===rT && s.refId===rI);
   const el=document.getElementById('sim-list');
   if(!list.length){
     el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="eic">📋</div><div class="et">Nenhum simulado encontrado</div><button class="btn bp" style="margin-top:11px" onclick="go(\'import\')">📥 Importar</button></div>';
@@ -2340,12 +2499,41 @@ async function renderSims(q=''){
     const bp=s.bestScore!==null?Math.round(s.bestScore):null;
     const hasSession=sessions.find(sess=>sess.simuladoId===s.id);
     const sessionInfo=hasSession?`<div style="background:var(--warn-lt);border:1px solid var(--warn);border-radius:6px;padding:6px 8px;font-size:11px;margin-bottom:8px;color:var(--warn)"><strong>⏳ Em andamento</strong> — ${Math.floor(hasSession.elapsedSeconds/60)}min · ${Object.keys(hasSession.answers||{}).length} questões</div>`:'';
-    return`<div class="sc"><div class="sct"><div style="font-size:22px;margin-bottom:5px">${ICONS[i%ICONS.length]}</div><div style="font-family:'Sora',sans-serif;font-weight:700;font-size:13px">${s.titulo}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${s.banca} · ${s.ano}</div></div><div class="scb">${sessionInfo}<div style="display:flex;flex-wrap:wrap;gap:5px"><span class="tag tac">📚 ${s.questoes.length} questões</span><span class="tag tinfo">${s.materia}</span>${s.plays?`<span class="tag twarn">▶ ${s.plays}x</span>`:''}</div>${bp!==null?`<div style="font-size:11px;color:var(--muted);margin-bottom:3px">Melhor: ${bp}%</div><div class="pt"><div class="pf" style="width:${bp}%"></div></div>`:'<div style="font-size:12px;color:var(--muted)">Nunca realizado</div>'}<div class="scf"><button class="btn ${hasSession?'bgold':'bp'} bsm bfull" onclick="startExam(${s.id})">${hasSession?'⏳ Retomar':'▶ Iniciar'}</button><button class="btn bo bsm" onclick="delSim(${s.id})">🗑</button></div></div></div>`;
+    return`<div class="sc"><div class="sct"><div style="font-size:22px;margin-bottom:5px">${ICONS[i%ICONS.length]}</div><div style="font-family:'Sora',sans-serif;font-weight:700;font-size:13px">${s.titulo}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${s.banca} · ${s.ano}</div></div><div class="scb">${sessionInfo}<div style="display:flex;flex-wrap:wrap;gap:5px"><span class="tag tac">📚 ${s.questoes.length} questões</span><span class="tag tinfo">${s.materia}</span>${s.plays?`<span class="tag twarn">▶ ${s.plays}x</span>`:''}</div>${bp!==null?`<div style="font-size:11px;color:var(--muted);margin-bottom:3px">Melhor: ${bp}%</div><div class="pt"><div class="pf" style="width:${bp}%"></div></div>`:'<div style="font-size:12px;color:var(--muted)">Nunca realizado</div>'}<div class="scf"><button class="btn ${hasSession?'bgold':'bp'} bsm bfull" onclick="startExam(${s.id})">${hasSession?'⏳ Retomar':'▶ Iniciar'}</button><button class="btn bo bsm" onclick="editSim(${s.id})">✏️</button><button class="btn bo bsm" onclick="delSim(${s.id})">🗑</button></div></div></div>`;
   }).join('');
 }
-document.getElementById('sim-s').addEventListener('input',e=>renderSims(e.target.value));
-function filterSims(){renderSims(document.getElementById('sim-s').value);}
-function openCreateSim(){showModal('Criar Simulado',`<div class="fg"><label class="fl">Título</label><input id="crt" class="fi" placeholder="Ex: Simulado Direito Constitucional 01"></div><div class="fg"><label class="fl">Matéria</label><input id="crm" class="fi" placeholder="Ex: Direito Constitucional"></div><div class="fg"><label class="fl">Banca</label><input id="crb" class="fi" placeholder="CESPE, FCC..."></div>`,[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Criar',c:'bp',fn:async()=>{const t=document.getElementById('crt').value.trim();if(!t){toast('Informe o título','err');return;}await dbAdd('simulados',{titulo:t,materia:document.getElementById('crm').value||'Geral',banca:document.getElementById('crb').value||'—',ano:new Date().getFullYear(),questoes:[],importedAt:Date.now(),plays:0,bestScore:null});sims=await dbAll('simulados');renderSims();toast('✅ Simulado criado!','ok');}}]);}
+document.getElementById('sim-s').addEventListener('input',e=>renderSims(e.target.value,filterRefType,filterRefId));
+function filterSims(){renderSims(document.getElementById('sim-s').value,filterRefType,filterRefId);}
+function openCreateSim(){showModal('Criar Simulado',`<div class="fg"><label class="fl">Título</label><input id="crt" class="fi" placeholder="Ex: Simulado Direito Constitucional 01"></div><div class="fg"><label class="fl">Matéria</label><input id="crm" class="fi" placeholder="Ex: Direito Constitucional"></div><div class="fg"><label class="fl">Banca</label><input id="crb" class="fi" placeholder="CESPE, FCC..."></div><div class="fg"><label class="fl">Relacionado a</label><select id="simref" class="fi">${getRefOptions()}</select></div>`,[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Criar',c:'bp',fn:async()=>{const t=document.getElementById('crt').value.trim();if(!t){toast('Informe o título','err');return;}const ref=parseRef(document.getElementById('simref').value);
+    await dbAdd('simulados',{titulo:t,materia:document.getElementById('crm').value||'Geral',banca:document.getElementById('crb').value||'—',refType:ref.type,refId:ref.id,ano:new Date().getFullYear(),questoes:[],importedAt:Date.now(),plays:0,bestScore:null});sims=await dbAll('simulados');renderSims();toast('✅ Simulado criado!','ok');}}]);}
+
+async function editSim(id){
+  const s=await dbGet('simulados',id);
+  if(!s)return;
+  const currentRef = s.refType ? `${s.refType}:${s.refId}` : '';
+  showModal('Editar Simulado',`
+    <div class="fg"><label class="fl">Título</label><input id="crt" class="fi" value="${s.titulo.replace(/"/g,'&quot;')}"></div>
+    <div class="fg"><label class="fl">Matéria</label><input id="crm" class="fi" value="${(s.materia||'').replace(/"/g,'&quot;')}"></div>
+    <div class="fg"><label class="fl">Banca</label><input id="crb" class="fi" value="${(s.banca||'').replace(/"/g,'&quot;')}"></div>
+    <div class="fg"><label class="fl">Relacionado a</label><select id="simref" class="fi">${getRefOptions()}</select></div>
+  `,[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Salvar',c:'bp',fn:async()=>{
+    const t=document.getElementById('crt').value.trim();
+    if(!t){toast('Informe o título','err');return;}
+    const ref=parseRef(document.getElementById('simref').value);
+    s.titulo=t;
+    s.materia=document.getElementById('crm').value||'Geral';
+    s.banca=document.getElementById('crb').value||'—';
+    s.refType=ref.type;
+    s.refId=ref.id;
+    await dbPut('simulados',s);
+    sims=await dbAll('simulados');
+    renderSims();
+    renderImpList();
+    toast('✅ Simulado atualizado!','ok');
+  }}]);
+  document.getElementById('simref').value = currentRef;
+}
+
 async function delSim(id){showModal('Remover Simulado','Tem certeza?',[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Remover',c:'bd',fn:async()=>{await dbDel('simulados',id);sims=await dbAll('simulados');renderSims();renderImpList();renderDash();toast('Removido');}}]);}
 async function renderImpList(){sims=await dbAll('simulados');const el=document.getElementById('imp-list');if(!sims.length){el.innerHTML='<div class="empty" style="padding:22px 0"><div class="eic" style="font-size:30px">📂</div><div class="et">Nenhum simulado importado</div></div>';return;}el.innerHTML=sims.map(s=>`<div class="lrow"><div style="font-size:18px">📋</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.titulo}</div><div style="font-size:11px;color:var(--muted)">${s.questoes.length} questões · ${s.banca} ${s.ano}</div></div><button class="btn bo bxs" onclick="delSim(${s.id})">🗑</button></div>`).join('');}
 
@@ -2701,8 +2889,11 @@ async function renderFCFromQuestoes(){
   renderFCCard();
 }
 
-async function renderFCDecks(){
-  fcDecks=await dbAll('flashdecks')||[];
+async function renderFCDecks(refType='',refId=null){
+  let list=await dbAll('flashdecks')||[];
+  const rT=refType||filterRefType, rI=refId||filterRefId;
+  if(rT&&rI)list=list.filter(d=>d.refType===rT && d.refId===rI);
+  fcDecks=list;
   const el=document.getElementById('fc-area');
   if(!fcDecks.length){
     el.innerHTML=`<div class="empty"><div class="eic">🗂</div><div class="et">Nenhum deck importado</div><div class="es">Baixe o modelo JSON e crie seu deck personalizado</div>
@@ -2821,7 +3012,7 @@ function handleFCFile(e){
         let count=0;
         for(const deck of arr){
           if(!deck.cards||!Array.isArray(deck.cards))throw new Error('Formato inválido. Use o modelo JSON.');
-          await dbAdd('flashdecks',{titulo:deck.titulo||f.name.replace('.json',''),materia:deck.materia||'Geral',cards:deck.cards,criadoEm:Date.now()});
+          const ref=parseRef(document.getElementById('fcref')?.value||''); await dbAdd('flashdecks',{titulo:deck.titulo||f.name.replace('.json',''),materia:deck.materia||'Geral',refType:ref.type,refId:ref.id,cards:deck.cards,criadoEm:Date.now()});
           count+=deck.cards.length;
         }
         toast(`✅ Deck importado! ${count} cards.`,'ok');
