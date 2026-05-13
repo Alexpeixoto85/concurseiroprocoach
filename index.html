@@ -506,6 +506,55 @@ textarea.fi{resize:vertical;min-height:70px;}
   #content{padding:18px;}
 }
 .active-day{box-shadow:0 0 15px var(--glow);}
+
+
+/* CURSOS */
+.course-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
+.course-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--ss);overflow:hidden;display:flex;flex-direction:column;min-width:0;}
+.course-head{padding:14px 15px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,var(--ac-lt),#f8fafc);display:flex;gap:10px;align-items:flex-start;}
+.course-icon{font-size:25px;flex-shrink:0;}
+.course-body{padding:13px 15px;display:flex;flex-direction:column;gap:10px;flex:1;}
+.course-meta{display:flex;flex-wrap:wrap;gap:5px;}
+.course-mod{border:1px solid var(--border);border-radius:9px;background:var(--surf2);overflow:hidden;}
+.course-mod-title{font-weight:700;font-size:12px;padding:8px 10px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:7px;}
+.course-aula{display:flex;align-items:center;gap:8px;padding:7px 10px;border-top:1px solid rgba(227,230,240,.65);font-size:12px;min-width:0;}
+.course-aula:first-child{border-top:0;}
+.course-aula-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.course-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:auto;padding-top:4px;}
+
+@media (max-width:768px){
+  .course-stats{grid-template-columns:repeat(2,1fr);}
+  .course-head{padding:12px;}
+  .course-body{padding:12px;}
+  .course-actions .btn{flex:1 1 calc(50% - 7px);}
+}
+@media (max-width:480px){
+  .course-stats{grid-template-columns:1fr;}
+  .course-actions{flex-direction:column;}
+  .course-actions .btn{width:100%;}
+}
+
+
+
+/* MOBILE FINAL OVERRIDES */
+@media (max-width:640px){
+  html,body,#app,#main{width:100%;max-width:100%;overflow-x:hidden;}
+  #content{width:100%;max-width:100%;overflow-x:hidden;padding:12px;}
+  .g3,.g2,.ga,.course-stats{grid-template-columns:1fr!important;width:100%;}
+  .sh,.shr{width:100%;}
+  .shr .btn,.shr select{flex:1 1 100%;width:100%;}
+  .scard,.card,.cc,.sc,.course-card,.lrow{max-width:100%;min-width:0;}
+  .tabs{width:100%;overflow-x:auto;}
+  #notif-panel{left:10px;right:10px;width:auto;}
+  .modal{max-width:calc(100vw - 18px);}
+  .cal-hdr,.cal-grid{min-width:520px;}
+}
+@media (max-width:420px){
+  .btn{white-space:normal;line-height:1.25;}
+  .tbr{gap:5px;}
+  .course-aula{align-items:flex-start;}
+  .course-aula-title{white-space:normal;}
+}
 </style>
 <script src="https://www.youtube.com/iframe_api">
 // ══════════════════════════════════════════════════════════
@@ -514,7 +563,7 @@ textarea.fi{resize:vertical;min-height:70px;}
 async function exportBackup() {
   try {
     const backup = {};
-    const stores = ['simulados', 'resultados', 'cadernos', 'videoaulas', 'concursos', 'taf', 'coachlog', 'flashdecks', 'user', 'checklist'];
+    const stores = ['simulados', 'resultados', 'cadernos', 'videoaulas', 'concursos', 'cursos', 'taf', 'coachlog', 'flashdecks', 'user', 'checklist'];
     for (const store of stores) {
       backup[store] = await dbAll(store);
     }
@@ -681,6 +730,7 @@ window.addEventListener('beforeunload', (e) => {
     <div class="ni" data-p="cronograma"><span class="ni-ic">📅</span>Cronograma</div>
     <div class="nlbl">Meus Concursos</div>
     <div class="ni" data-p="concursos"><span class="ni-ic">🎯</span>Concursos</div>
+    <div class="ni" data-p="cursos"><span class="ni-ic">🎓</span>Cursos</div>
     <div class="ni" data-p="videoaulas"><span class="ni-ic">🎬</span>Videoaulas</div>
     <div class="nlbl">Questões</div>
     <div class="ni" data-p="simulados"><span class="ni-ic">📋</span>Simulados</div>
@@ -808,6 +858,46 @@ window.addEventListener('beforeunload', (e) => {
     </div>
   </div>
   <div id="cc-list"></div>
+</div>
+
+
+
+<!-- ══════════ CURSOS ══════════ -->
+<div class="panel" id="panel-cursos">
+  <div class="sh">
+    <div><div class="stitle">🎓 Cursos</div><div class="ssub">Cadastre cursos, importe módulos e acompanhe o progresso das aulas</div></div>
+    <div class="shr">
+      <button class="btn bo bsm" onclick="downloadCursoTemplate()">⬇️ Modelo JSON</button>
+      <button class="btn bo bsm" onclick="document.getElementById('cursofi').click()">📥 Importar JSON</button>
+      <button class="btn bp" onclick="openAddCurso()">+ Cadastrar</button>
+      <input type="file" id="cursofi" accept=".json" multiple style="display:none" onchange="handleCursoFile(event)">
+    </div>
+  </div>
+  <div class="hint-box info" id="hint-cursos">
+    <div class="hint-toggle" onclick="toggleHint('hint-cursos')">
+      <span style="font-size:15px">🎓</span>
+      <span class="hint-toggle-title">Como importar cursos automaticamente</span>
+      <span class="hint-arrow">&#9660;</span>
+    </div>
+    <div class="hint-body">
+      <div class="import-cc-steps">
+        <span>1.</span> Clique em <strong>Modelo JSON</strong> para baixar a estrutura de curso com módulos e aulas<br>
+        <span>2.</span> Use o prompt abaixo para gerar um curso completo para seu concurso ou área de estudo<br>
+        <span>3.</span> Salve o retorno como <code>.json</code> e importe no painel<br>
+        <span>4.</span> Marque as aulas concluídas; o progresso é salvo automaticamente no navegador
+      </div>
+      <div style="background:rgba(59,130,246,.07);border-radius:8px;padding:11px 13px;margin-bottom:11px;font-size:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--info);margin-bottom:6px;letter-spacing:.5px">PROMPT PARA GERAR CURSOS COM IA</div>
+        <div style="color:var(--txt2);line-height:1.7">Crie um curso em JSON para estudar <strong>[MATÉRIA/CONCURSO]</strong>, dividido em módulos e aulas, do básico ao avançado. Retorne APENAS o JSON seguindo o modelo baixado.</div>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn bo bsm" onclick="downloadCursoTemplate()">Baixar modelo de curso</button>
+        <button class="btn bp bsm" onclick="document.getElementById('cursofi').click()">Importar e cadastrar</button>
+      </div>
+    </div>
+  </div>
+  <input class="sbar" type="text" placeholder="🔍 Buscar por curso, plataforma, professor ou categoria…" id="curso-search" oninput="filterCursos()">
+  <div id="curso-area"></div>
 </div>
 
 <!-- ══════════ VIDEOAULAS ══════════ -->
@@ -1065,7 +1155,7 @@ window.addEventListener('error',e=>{
 //  IndexedDB
 // ══════════════════════════════════════════════════════════
 let DB;
-function openDB(){return new Promise((ok,fail)=>{const r=indexedDB.open('MQv6',2);r.onupgradeneeded=e=>{const d=e.target.result;['simulados','resultados','cadernos','videoaulas','concursos','taf','coachlog','flashdecks','examSessions'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id',autoIncrement:true});});if(!d.objectStoreNames.contains('user'))d.createObjectStore('user',{keyPath:'key'});if(!d.objectStoreNames.contains('checklist'))d.createObjectStore('checklist',{keyPath:'key'});};r.onsuccess=e=>{DB=e.target.result;ok();};r.onerror=()=>fail(r.error);});}
+function openDB(){return new Promise((ok,fail)=>{const r=indexedDB.open('MQv6',3);r.onupgradeneeded=e=>{const d=e.target.result;['simulados','resultados','cadernos','videoaulas','concursos','cursos','taf','coachlog','flashdecks','examSessions'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id',autoIncrement:true});});if(!d.objectStoreNames.contains('user'))d.createObjectStore('user',{keyPath:'key'});if(!d.objectStoreNames.contains('checklist'))d.createObjectStore('checklist',{keyPath:'key'});};r.onsuccess=e=>{DB=e.target.result;ok();};r.onerror=()=>fail(r.error);});}
 const T=(s,m='readonly')=>DB.transaction(s,m).objectStore(s);
 const dbAll=s=>new Promise((ok,f)=>{const r=T(s).getAll();r.onsuccess=()=>ok(r.result);r.onerror=()=>f(r.error);});
 const dbGet=(s,k)=>new Promise((ok,f)=>{const r=T(s).get(k);r.onsuccess=()=>ok(r.result);r.onerror=()=>f(r.error);});
@@ -1076,7 +1166,7 @@ const dbDel=(s,k)=>new Promise((ok,f)=>{const r=T(s,'readwrite').delete(k);r.ons
 // ══════════════════════════════════════════════════════════
 //  State & helpers
 // ══════════════════════════════════════════════════════════
-let sims=[],results=[],vids=[],concursos=[],allQ=[];
+let sims=[],results=[],vids=[],concursos=[],cursos=[],allQ=[];
 let user={key:'profile',name:'Estudante',xp:20,level:1,coins:7660};
 let examSim=null,qi=0,answers={},revMode=false,secs=0,timerID=null;
 let autoSaveInterval=null; // Para salvar automaticamente o progresso
@@ -1084,7 +1174,7 @@ let qDF='',vaDF=''; // filtros ativos
 const COLORS=['#6c5ce7','#10b981','#ef4444','#f59e0b','#3b82f6','#ec4899','#8b5cf6','#06b6d4'];
 const ICONS=['📖','⚖️','🏛️','📜','🔬','🧮','📝','🎓','🔎','📑'];
 const DS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-const PTITLES={dashboard:'Dashboard',coach:'Coach Diário',cronograma:'Cronograma de Estudos',concursos:'Meus Concursos',cursos:'Meus Cursos',videoaulas:'Videoaulas',simulados:'Simulados',questoes:'Questões',flashcards:'Flashcards',taf:'TAF — Treinamento Físico',checklist:'Checklist da Prova',estatisticas:'Estatísticas',configuracoes:'Configurações',ranking:'Rankings',import:'Importar Simulado',cadernos:'Cadernos'};
+const PTITLES={dashboard:'Dashboard',coach:'Coach Diário',cronograma:'Cronograma de Estudos',concursos:'Concursos',cursos:'Cursos',videoaulas:'Videoaulas',simulados:'Simulados',questoes:'Questões',flashcards:'Flashcards',taf:'TAF — Treinamento Físico',checklist:'Checklist da Prova',estatisticas:'Estatísticas',configuracoes:'Configurações',ranking:'Rankings',import:'Importar Simulado',cadernos:'Cadernos'};
 const today=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());};
 const toISO=d=>d.toISOString().split('T')[0];
 const fmtBR=s=>s?new Date(s+'T12:00:00').toLocaleDateString('pt-BR'):'';
@@ -1128,79 +1218,58 @@ document.getElementById('mol').addEventListener('click',e=>{if(e.target.id==='mo
 // ══════════════════════════════════════════════════════════
 //  CONCURSOS
 // ══════════════════════════════════════════════════════════
-function handleCCFile(e){[...e.target.files].forEach(f=>{const r=new FileReader();r.onload=async ev=>{try{let d=JSON.parse(ev.target.result);if(!Array.isArray(d))d=[d];for(const x of d){const mats=(x.materias||[]).map(m=>({nome:typeof m==='string'?m:m.nome,feita:m.feita||false}));await dbAdd('concursos',{nome:x.nome||x.titulo||f.name.replace('.json',''),orgao:x.orgao||'',cargo:x.cargo||'',status:x.status||'Estudando',vagas:x.vagas||0,salario:x.salario||'',dataProva:x.dataProva||'',horaProva:x.horaProva||'08:00',inscricaoFim:x.inscricaoFim||'',edital:x.edital||'',local:x.local||'',obs:x.obs||'',materias:mats,hasTAF:x.hasTAF||false,criadoEm:Date.now()});}concursos=await dbAll('concursos');renderCC(); renderCursos();renderDash();updateCronoSel();toast('✅ Concurso(s) importado(s)!','ok');}catch(err){toast('❌ '+err.message,'err');}};r.readAsText(f);});e.target.value='';}
-
-async function openAddCurso(){
-  showModal('Cadastrar Novo Curso / Vestibular',`
-    <div style="background:var(--taf-lt);padding:10px;border-radius:8px;margin-bottom:15px;font-size:12px;color:var(--taf);font-weight:600">
-      🎓 Focado em ENEM, Vestibulares, Graduação ou Cursos Livres.
-    </div>
-    <div class="fg"><label class="fl">Nome do Curso / Objetivo *</label><input id="cur-n" class="fi" placeholder="Ex: ENEM 2026 ou Curso de Python"></div>
-    <div class="fg"><label class="fl">Instituição / Escola</label><input id="cur-i" class="fi" placeholder="Ex: USP, Alura, Descomplica..."></div>
-    <div class="fg"><label class="fl">Data do Exame / Conclusão *</label><input id="cur-d" class="fi" type="date"></div>
-    <div class="fg"><label class="fl">Disciplinas / Módulos (separados por vírgula)</label><textarea id="cur-m" class="fi" placeholder="Física, Química, Biologia..."></textarea></div>
-    <div class="fg"><label class="fl">Carga Horária Total (opcional)</label><input id="cur-h" class="fi" type="text" placeholder="Ex: 40h"></div>
-  `,[
-    {l:'Cancelar',c:'bo',fn:()=>{}},
-    {l:'🚀 Iniciar Estudos',c:'btaf',fn:async()=>{
-      const n=document.getElementById('cur-n').value.trim();
-      const d=document.getElementById('cur-d').value;
-      if(!n||!d){toast('Nome e Data são obrigatórios','err');return;}
-      const mats=document.getElementById('cur-m').value.split(',').map(m=>m.trim()).filter(Boolean).map(m=>({nome:m,feita:false}));
-      const id = await dbAdd('concursos',{
-        tipo: 'curso',
-        nome: n,
-        orgao: document.getElementById('cur-i').value,
-        dataProva: d,
-        materias: mats,
-        hasTAF: false,
-        criadoEm: Date.now()
-      });
-      await gerarCronogramaAuto(id, mats, false);
-      renderCC(); renderCursos(); renderDash(); updateCronoSel();
-      toast('✅ Curso e Cronograma criados!','ok');
-      setTimeout(()=>go('cronograma'),400);
-    }}
-  ]);
-}
+function handleCCFile(e){[...e.target.files].forEach(f=>{const r=new FileReader();r.onload=async ev=>{try{let d=JSON.parse(ev.target.result);if(!Array.isArray(d))d=[d];for(const x of d){const mats=(x.materias||[]).map(m=>({nome:typeof m==='string'?m:m.nome,feita:m.feita||false}));await dbAdd('concursos',{nome:x.nome||x.titulo||f.name.replace('.json',''),orgao:x.orgao||'',cargo:x.cargo||'',status:x.status||'Estudando',vagas:x.vagas||0,salario:x.salario||'',dataProva:x.dataProva||'',horaProva:x.horaProva||'08:00',inscricaoFim:x.inscricaoFim||'',edital:x.edital||'',local:x.local||'',obs:x.obs||'',materias:mats,hasTAF:x.hasTAF||false,criadoEm:Date.now()});}concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();toast('✅ Concurso(s) importado(s)!','ok');}catch(err){toast('❌ '+err.message,'err');}};r.readAsText(f);});e.target.value='';}
 
 async function openAddCC(){
-  showModal('Cadastrar Novo Concurso',`
-    <div style="background:var(--ac-lt);padding:10px;border-radius:8px;margin-bottom:15px;font-size:12px;color:var(--ac);font-weight:600">
-      🏛️ Focado em editais, cargos públicos e TAF.
-    </div>
-    <div class="fg"><label class="fl">Nome do Concurso *</label><input id="cn" class="fi" placeholder="Ex: GCM Maceió 2026"></div>
-    <div class="fg"><label class="fl">Órgão / Instituição</label><input id="co" class="fi" placeholder="Ex: Prefeitura de Maceió"></div>
-    <div class="fg"><label class="fl">Cargo</label><input id="cc" class="fi" placeholder="Ex: Guarda Municipal"></div>
+  showModal('Cadastrar Concurso',`
+    <div class="fg"><label class="fl">Nome do concurso *</label><input id="cn" class="fi" placeholder="Ex: Concurso GCM Maceió 2026"></div>
+    <div class="fg"><label class="fl">Órgão / Instituição</label><input id="co" class="fi" placeholder="Ex: Prefeitura Municipal de Maceió"></div>
+    <div class="fg"><label class="fl">Cargo</label><input id="cc" class="fi" placeholder="Ex: Guarda Civil Municipal"></div>
     <div class="g2">
-      <div class="fg"><label class="fl">Data da Prova *</label><input id="cd" class="fi" type="date"></div>
-      <div class="fg"><label class="fl">Hora</label><input id="ch" class="fi" type="time" value="08:00"></div>
+      <div class="fg"><label class="fl">Data da prova *</label><input id="cd" class="fi" type="date"></div>
+      <div class="fg"><label class="fl">Hora da prova</label><input id="ch" class="fi" type="time" value="08:00"></div>
     </div>
-    <div class="fg"><label class="fl">Matérias do Edital (separadas por vírgula)</label><textarea id="cm" class="fi" placeholder="Português, Matemática, Direito..."></textarea></div>
-    <div class="fg"><label class="fl">Possui TAF?</label><select id="ctaf" class="fi"><option value="">Não</option><option value="1">Sim</option></select></div>
-    <div class="fg"><label class="fl">Salário Previsto (R$)</label><input id="cs" class="fi" type="number" placeholder="0.00"></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Fim das inscrições</label><input id="ci" class="fi" type="date"></div>
+      <div class="fg"><label class="fl">Local da prova</label><input id="cl" class="fi" placeholder="Ex: Maceió/AL"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Salário (R$)</label><input id="cs" class="fi" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="fg"><label class="fl">Nº de vagas</label><input id="cv" class="fi" type="number" placeholder="0"></div>
+    </div>
+    <div class="fg"><label class="fl">Matérias do edital (separadas por vírgula)</label><textarea id="cm" class="fi" placeholder="Língua Portuguesa, Raciocínio Lógico, Direito Constitucional..."></textarea></div>
+    <div class="fg"><label class="fl">Inclui TAF (Teste de Aptidão Física)?</label><select id="ctaf" class="fi"><option value="">Não</option><option value="1">Sim</option></select></div>
+    <div class="fg"><label class="fl">Link do edital</label><input id="ce" class="fi" type="url" placeholder="https://..."></div>
+    <div class="fg"><label class="fl">Observações / Banca</label><textarea id="cob" class="fi" placeholder="Banca organizadora, taxa de inscrição, reserva PcD..."></textarea></div>
   `,[
     {l:'Cancelar',c:'bo',fn:()=>{}},
-    {l:'💾 Salvar Concurso',c:'bp',fn:async()=>{
+    {l:'💾 Salvar e Gerar Cronograma',c:'bp',fn:async()=>{
       const n=document.getElementById('cn').value.trim();
       const d=document.getElementById('cd').value;
-      if(!n||!d){toast('Nome e Data são obrigatórios','err');return;}
+      if(!n){toast('Informe o nome','err');return;}
+      if(!d){toast('Informe a data da prova','err');return;}
       const mats=document.getElementById('cm').value.split(',').map(m=>m.trim()).filter(Boolean).map(m=>({nome:m,feita:false}));
       const id = await dbAdd('concursos',{
         tipo: 'concurso',
         nome: n,
         orgao: document.getElementById('co').value,
         cargo: document.getElementById('cc').value,
+        status: 'Estudando',
+        vagas: +document.getElementById('cv').value || 0,
+        salario: document.getElementById('cs').value,
         dataProva: d,
         horaProva: document.getElementById('ch').value,
+        inscricaoFim: document.getElementById('ci').value,
+        edital: document.getElementById('ce').value,
+        local: document.getElementById('cl').value,
+        obs: document.getElementById('cob').value,
         materias: mats,
         hasTAF: !!document.getElementById('ctaf').value,
-        salario: document.getElementById('cs').value,
         criadoEm: Date.now()
       });
       await gerarCronogramaAuto(id, mats, !!document.getElementById('ctaf').value);
-      renderCC(); renderCursos(); renderDash(); updateCronoSel();
-      toast('✅ Concurso e Cronograma criados!','ok');
+      concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();
+      toast('✅ Concurso cadastrado! Cronograma gerado.','ok');
       setTimeout(()=>go('cronograma'),400);
     }}
   ]);
@@ -1208,66 +1277,51 @@ async function openAddCC(){
 
 async function renderCC(){
   concursos=await dbAll('concursos');
-  const list = concursos.filter(c => c.tipo === 'concurso');
   const el=document.getElementById('cc-list');
-  if(!list.length){el.innerHTML='<div class="empty"><div class="eic">🏛️</div><div class="et">Nenhum concurso cadastrado</div><button class="btn bp" onclick="openAddCC()">+ Cadastrar Concurso</button></div>';return;}
-  el.innerHTML='<div class="ga">'+list.map(c=>renderCardItem(c)).join('')+'</div>';
-}
-
-async function renderCursos(){
-  concursos=await dbAll('concursos');
-  const list = concursos.filter(c => c.tipo === 'curso');
-  const el=document.getElementById('cursos-list');
-  if(!list.length){el.innerHTML='<div class="empty"><div class="eic">🎓</div><div class="et">Nenhum curso cadastrado</div><button class="btn btaf" onclick="openAddCurso()">+ Cadastrar Curso</button></div>';return;}
-  el.innerHTML='<div class="ga">'+list.map(c=>renderCardItem(c)).join('')+'</div>';
-}
-
-function renderCardItem(c){
-  const dias=c.dataProva?diffD(c.dataProva,toISO(today())):null;
-  const cls=dias===null?'':dias<=0?'urg':dias<=14?'urg':dias<=30?'sn':'gd';
-  const prog=c.materias?.length?Math.round((c.materias.filter(m=>m.feita).length/c.materias.length)*100):0;
-  const isCurso = c.tipo === 'curso';
-  const icon = isCurso ? '🎓' : '🏛️';
-  const colorClass = isCurso ? 'btaf' : 'bp';
-  
-  return `<div class="cc">
-    <div class="cct">
-      <div style="font-size:26px;flex-shrink:0">${icon}</div>
-      <div>
-        <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:13px;line-height:1.3">${c.nome}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.cargo||c.orgao||''}</div>
-      </div>
-    </div>
-    <div class="ccb">
-      ${dias!==null?`<div><div class="ccd ${cls}">${dias>0?dias+' dias':dias===0?'🔴 HOJE!':'✔ Encerrado'}</div><div style="font-size:11px;color:var(--muted)">${c.dataProva?fmtBR(c.dataProva):''}${c.horaProva?' às '+c.horaProva:''}</div></div>`:''}
-      <div style="display:flex;flex-wrap:wrap;gap:5px">
-        ${c.vagas?`<span class="tag tinfo">👥 ${c.vagas} vagas</span>`:''}
-        ${c.salario?`<span class="tag tok">💰 R$${parseFloat(c.salario).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
-        ${c.hasTAF?`<span class="tag ttaf">🏃 TAF</span>`:''}
-        ${c.local?`<span class="tag tac">📍 ${c.local}</span>`:''}
-      </div>
-      ${c.materias?.length?`
+  if(!concursos.length){el.innerHTML='<div class="empty"><div class="eic">🎯</div><div class="et">Nenhum concurso cadastrado</div><div class="es">Cadastre ou importe seu primeiro concurso</div><button class="btn bp" onclick="openAddCC()">+ Cadastrar</button></div>';return;}
+  el.innerHTML='<div class="ga">'+concursos.map(c=>{
+    const dias=c.dataProva?diffD(c.dataProva,toISO(today())):null;
+    const cls=dias===null?'':dias<=0?'urg':dias<=14?'urg':dias<=30?'sn':'gd';
+    const prog=c.materias?.length?Math.round((c.materias.filter(m=>m.feita).length/c.materias.length)*100):0;
+    return`<div class="cc">
+      <div class="cct">
+        <div style="font-size:26px;flex-shrink:0">🎯</div>
         <div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Progresso: ${c.materias.filter(m=>m.feita).length}/${c.materias.length} (${prog}%)</div>
-          <div class="pt" style="margin-bottom:8px"><div class="pf" style="width:${prog}%"></div></div>
-          ${c.materias.map((m,mi)=>`<div class="matitem">
-            <div class="matcb ${m.feita?'on':''}" onclick="toggleMat(${c.id},${mi})"></div>
-            <span style="${m.feita?'text-decoration:line-through;color:var(--muted)':''}">${m.nome}</span>
-          </div>`).join('')}
-        </div>`:''}
-      ${c.inscricaoFim?`<div style="font-size:11px;color:var(--muted)">📋 Inscrição até: ${fmtBR(c.inscricaoFim)}</div>`:''}
-      ${c.obs?`<div style="font-size:11px;color:var(--muted);background:var(--bg);padding:7px;border-radius:6px;line-height:1.5">${c.obs.substring(0,120)}${c.obs.length>120?'…':''}</div>`:''}
-    </div>
-    <div class="ccf">
-      ${c.edital?`<a href="${c.edital}" target="_blank" class="btn bo bsm">📄 Edital</a>`:''}
-      <button class="btn ${colorClass} bsm" onclick="go('cronograma')">📅 Cronograma</button>
-      ${c.hasTAF?`<button class="btn btaf bsm" onclick="go('taf')">🏃 TAF</button>`:''}
-      <button class="btn bd bsm" onclick="delCC(${c.id})" style="margin-left:auto">🗑</button>
-    </div>
-  </div>`;
+          <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:13px;line-height:1.3">${c.nome}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${c.cargo||c.orgao||''}</div>
+        </div>
+      </div>
+      <div class="ccb">
+        ${dias!==null?`<div><div class="ccd ${cls}">${dias>0?dias+' dias':dias===0?'🔴 HOJE!':'✔ Encerrado'}</div><div style="font-size:11px;color:var(--muted)">${c.dataProva?fmtBR(c.dataProva):''}${c.horaProva?' às '+c.horaProva:''}</div></div>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:5px">
+          ${c.vagas?`<span class="tag tinfo">👥 ${c.vagas} vagas</span>`:''}
+          ${c.salario?`<span class="tag tok">💰 R$${parseFloat(c.salario).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
+          ${c.hasTAF?`<span class="tag ttaf">🏃 TAF</span>`:''}
+          ${c.local?`<span class="tag tac">📍 ${c.local}</span>`:''}
+        </div>
+        ${c.materias?.length?`
+          <div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Matérias: ${c.materias.filter(m=>m.feita).length}/${c.materias.length} (${prog}%)</div>
+            <div class="pt" style="margin-bottom:8px"><div class="pf" style="width:${prog}%"></div></div>
+            ${c.materias.map((m,mi)=>`<div class="matitem">
+              <div class="matcb ${m.feita?'on':''}" onclick="toggleMat(${c.id},${mi})"></div>
+              <span style="${m.feita?'text-decoration:line-through;color:var(--muted)':''}">${m.nome}</span>
+            </div>`).join('')}
+          </div>`:''}
+        ${c.inscricaoFim?`<div style="font-size:11px;color:var(--muted)">📋 Inscrição até: ${fmtBR(c.inscricaoFim)}</div>`:''}
+        ${c.obs?`<div style="font-size:11px;color:var(--muted);background:var(--bg);padding:7px;border-radius:6px;line-height:1.5">${c.obs.substring(0,120)}${c.obs.length>120?'…':''}</div>`:''}
+      </div>
+      <div class="ccf">
+        ${c.edital?`<a href="${c.edital}" target="_blank" class="btn bo bsm">📄 Edital</a>`:''}
+        <button class="btn bp bsm" onclick="go('cronograma')">📅 Cronograma</button>
+        ${c.hasTAF?`<button class="btn btaf bsm" onclick="go('taf')">🏃 TAF</button>`:''}
+        <button class="btn bd bsm" onclick="delCC(${c.id})" style="margin-left:auto">🗑</button>
+      </div>
+    </div>`;
+  }).join('')+'</div>';
 }
-async function toggleMat(cid,mi){const c=await dbGet('concursos',cid);c.materias[mi].feita=!c.materias[mi].feita;await dbPut('concursos',c);concursos=await dbAll('concursos');renderCC(); renderCursos();}
-async function delCC(id){showModal('Remover Concurso','Tem certeza? Os dados serão apagados.',[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Remover',c:'bd',fn:async()=>{await dbDel('concursos',id);concursos=await dbAll('concursos');renderCC(); renderCursos();renderDash();updateCronoSel();toast('Concurso removido');}}]);}
+async function toggleMat(cid,mi){const c=await dbGet('concursos',cid);c.materias[mi].feita=!c.materias[mi].feita;await dbPut('concursos',c);concursos=await dbAll('concursos');renderCC();}
+async function delCC(id){showModal('Remover Concurso','Tem certeza? Os dados serão apagados.',[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Remover',c:'bd',fn:async()=>{await dbDel('concursos',id);concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();toast('Concurso removido');}}]);}
 
 // ══════════════════════════════════════════════════════════
 //  CRONOGRAMA
@@ -1762,6 +1816,200 @@ async function renderCK(){
 
 async function toggleCK(key){const saved=await dbGet('checklist','ck1')||{key:'ck1',items:{}};saved.items=saved.items||{};saved.items[key]=!saved.items[key];await dbPut('checklist',saved);renderCK();}
 async function resetCK(){showModal('Reiniciar Checklist','Isso vai desmarcar todos os itens.',[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Reiniciar',c:'bd',fn:async()=>{await dbPut('checklist',{key:'ck1',items:{}});renderCK();toast('Checklist reiniciado');}}]);}
+
+
+
+// ══════════════════════════════════════════════════════════
+//  CURSOS
+// ══════════════════════════════════════════════════════════
+function cursoProgress(c){
+  const mods=c.modulos||[];
+  const aulas=mods.flatMap(m=>m.aulas||[]);
+  const total=aulas.length;
+  const done=aulas.filter(a=>a.concluida||a.done).length;
+  return {total,done,pct:total?Math.round(done/total*100):0};
+}
+function parseCursoModulos(txt){
+  const linhas=(txt||'').split('\n').map(x=>x.trim()).filter(Boolean);
+  if(!linhas.length)return [];
+  return linhas.map((linha,i)=>{
+    const parts=linha.split(':');
+    const nome=(parts.length>1?parts.shift():`Módulo ${i+1}`).trim();
+    const aulas=(parts.join(':')||linha).split(';').map(a=>a.trim()).filter(Boolean).map(t=>({titulo:t,duracao:0,link:'',concluida:false,anotacoes:''}));
+    return {nome,aulas};
+  });
+}
+function normalizeCurso(d,fileName='curso.json'){
+  const rawMods=d.modulos||d.modules||[];
+  let modulos=[];
+  if(rawMods.length){
+    modulos=rawMods.map((m,i)=>{
+      if(typeof m==='string')return {nome:m,aulas:[]};
+      const aulas=(m.aulas||m.lessons||[]).map((a,ai)=>typeof a==='string'?{titulo:a,duracao:0,link:'',concluida:false,anotacoes:''}:{titulo:a.titulo||a.nome||a.title||`Aula ${ai+1}`,duracao:+(a.duracao||a.minutos||0)||0,link:a.link||a.url||'',concluida:!!(a.concluida||a.done),anotacoes:a.anotacoes||a.obs||''});
+      return {nome:m.nome||m.titulo||m.name||`Módulo ${i+1}`,aulas};
+    });
+  }else if(d.aulas||d.lessons){
+    modulos=[{nome:'Módulo Único',aulas:(d.aulas||d.lessons).map((a,ai)=>typeof a==='string'?{titulo:a,duracao:0,link:'',concluida:false,anotacoes:''}:{titulo:a.titulo||a.nome||a.title||`Aula ${ai+1}`,duracao:+(a.duracao||0)||0,link:a.link||a.url||'',concluida:!!(a.concluida||a.done),anotacoes:a.anotacoes||a.obs||''})}];
+  }
+  return {
+    titulo:d.titulo||d.nome||d.title||fileName.replace(/\.json$/i,''),
+    plataforma:d.plataforma||d.provider||'',
+    professor:d.professor||d.instrutor||'',
+    categoria:d.categoria||d.materia||'Geral',
+    cargaHoraria:+(d.cargaHoraria||d.carga||0)||0,
+    inicio:d.inicio||d.dataInicio||'',
+    fim:d.fim||d.dataFim||'',
+    status:d.status||'Em andamento',
+    link:d.link||d.url||'',
+    observacoes:d.observacoes||d.obs||'',
+    modulos,
+    criadoEm:d.criadoEm||Date.now(),
+    atualizadoEm:Date.now()
+  };
+}
+async function openAddCurso(){
+  showModal('Cadastrar Curso',`
+    <div class="fg"><label class="fl">Nome do curso *</label><input id="cut" class="fi" placeholder="Ex: Direito Constitucional Completo"></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Plataforma</label><input id="cup" class="fi" placeholder="Ex: Gran Cursos, Estratégia"></div>
+      <div class="fg"><label class="fl">Professor / Instrutor</label><input id="cui" class="fi" placeholder="Nome do professor"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Categoria / Matéria</label><input id="cuc" class="fi" placeholder="Ex: Português"></div>
+      <div class="fg"><label class="fl">Carga horária (h)</label><input id="cuh" class="fi" type="number" min="0" step="1"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Início</label><input id="cud1" class="fi" type="date"></div>
+      <div class="fg"><label class="fl">Prazo / Fim</label><input id="cud2" class="fi" type="date"></div>
+    </div>
+    <div class="fg"><label class="fl">Link do curso</label><input id="cul" class="fi" type="url" placeholder="https://..."></div>
+    <div class="fg"><label class="fl">Módulos e aulas</label><textarea id="cum" class="fi" style="min-height:120px" placeholder="Módulo 1: Aula 1; Aula 2; Aula 3\nMódulo 2: Aula 4; Aula 5"></textarea><div style="font-size:11px;color:var(--muted);margin-top:4px">Use uma linha por módulo. Separe as aulas por ponto e vírgula.</div></div>
+    <div class="fg"><label class="fl">Observações</label><textarea id="cuo" class="fi" placeholder="Estratégia, metas semanais, materiais complementares..."></textarea></div>
+  `,[
+    {l:'Cancelar',c:'bo',fn:()=>{}},
+    {l:'💾 Salvar curso',c:'bp',fn:async()=>{
+      const titulo=document.getElementById('cut').value.trim();
+      if(!titulo){toast('Informe o nome do curso','err');return;}
+      const curso=normalizeCurso({
+        titulo,
+        plataforma:document.getElementById('cup').value,
+        professor:document.getElementById('cui').value,
+        categoria:document.getElementById('cuc').value||'Geral',
+        cargaHoraria:document.getElementById('cuh').value,
+        inicio:document.getElementById('cud1').value,
+        fim:document.getElementById('cud2').value,
+        link:document.getElementById('cul').value,
+        observacoes:document.getElementById('cuo').value,
+        modulos:parseCursoModulos(document.getElementById('cum').value)
+      });
+      await dbAdd('cursos',curso);
+      cursos=await dbAll('cursos');
+      renderCursos();
+      toast('✅ Curso cadastrado!','ok');
+    }}
+  ]);
+}
+async function renderCursos(){
+  cursos=await dbAll('cursos');
+  const el=document.getElementById('curso-area');
+  if(!el)return;
+  const q=(document.getElementById('curso-search')?.value||'').toLowerCase().trim();
+  const list=cursos.filter(c=>!q||[c.titulo,c.plataforma,c.professor,c.categoria,c.status].some(v=>(v||'').toLowerCase().includes(q)));
+  const totalAulas=cursos.reduce((a,c)=>a+cursoProgress(c).total,0);
+  const doneAulas=cursos.reduce((a,c)=>a+cursoProgress(c).done,0);
+  const concluidos=cursos.filter(c=>cursoProgress(c).pct>=100).length;
+  let html=`<div class="course-stats">
+    <div class="scard"><div class="slbl">Cursos</div><div class="sval cac">${cursos.length}</div></div>
+    <div class="scard"><div class="slbl">Aulas</div><div class="sval">${totalAulas}</div></div>
+    <div class="scard"><div class="slbl">Concluídas</div><div class="sval cok">${doneAulas}</div></div>
+    <div class="scard"><div class="slbl">Cursos finalizados</div><div class="sval cgold">${concluidos}</div></div>
+  </div>`;
+  if(!cursos.length){el.innerHTML=html+'<div class="empty"><div class="eic">🎓</div><div class="et">Nenhum curso cadastrado</div><div class="es">Cadastre ou importe seu primeiro curso</div><button class="btn bp" onclick="openAddCurso()">+ Cadastrar curso</button></div>';return;}
+  if(!list.length){el.innerHTML=html+'<div class="empty"><div class="eic">🔎</div><div class="et">Nenhum curso encontrado</div><div class="es">Ajuste a busca para visualizar outros cursos</div></div>';return;}
+  html+='<div class="ga">'+list.map(c=>{
+    const p=cursoProgress(c);
+    const prazo=c.fim?diffD(c.fim,toISO(today())):null;
+    return `<div class="course-card">
+      <div class="course-head"><div class="course-icon">🎓</div><div style="min-width:0;flex:1"><div style="font-family:'Sora',sans-serif;font-weight:800;font-size:13px;line-height:1.35">${c.titulo}</div><div style="font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${[c.plataforma,c.professor].filter(Boolean).join(' · ')||'Curso sem plataforma informada'}</div></div></div>
+      <div class="course-body">
+        <div class="course-meta">
+          <span class="tag tac">${c.categoria||'Geral'}</span>
+          ${c.cargaHoraria?`<span class="tag tinfo">${c.cargaHoraria}h</span>`:''}
+          ${prazo!==null?`<span class="tag ${prazo<0?'terr':prazo<=7?'twarn':'tok'}">${prazo<0?'Prazo encerrado':prazo+' dias'}</span>`:''}
+          <span class="tag ${p.pct>=100?'tok':'tgold'}">${p.pct}%</span>
+        </div>
+        <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Progresso: ${p.done}/${p.total} aulas</div><div class="pt"><div class="pf" style="width:${p.pct}%"></div></div></div>
+        ${(c.modulos||[]).slice(0,4).map((m,mi)=>`<div class="course-mod"><div class="course-mod-title"><span>${m.nome}</span><button class="btn bo bxs" onclick="markCursoModulo(${c.id},${mi},true)">Concluir módulo</button></div>${(m.aulas||[]).map((a,ai)=>`<div class="course-aula"><div class="matcb ${a.concluida?'on':''}" onclick="toggleCursoAula(${c.id},${mi},${ai})"></div><div class="course-aula-title" style="${a.concluida?'text-decoration:line-through;color:var(--muted)':''}">${a.titulo}</div>${a.duracao?`<span style="font-size:10px;color:var(--muted)">${a.duracao}min</span>`:''}${a.link?`<a class="btn bo bxs" target="_blank" href="${a.link}">Abrir</a>`:''}</div>`).join('')||'<div class="course-aula"><span style="color:var(--muted)">Sem aulas cadastradas</span></div>'}</div>`).join('')}
+        ${(c.modulos||[]).length>4?`<div style="font-size:11px;color:var(--muted)">+ ${(c.modulos||[]).length-4} módulo(s) oculto(s) no cartão</div>`:''}
+        ${c.observacoes?`<div style="font-size:11px;color:var(--muted);background:var(--bg);padding:7px;border-radius:6px;line-height:1.5">${c.observacoes.substring(0,140)}${c.observacoes.length>140?'…':''}</div>`:''}
+        <div class="course-actions">
+          ${c.link?`<a class="btn bp bsm" target="_blank" href="${c.link}">▶ Continuar</a>`:''}
+          <button class="btn bo bsm" onclick="saveCursoProgress(${c.id})">💾 Salvar progresso</button>
+          <button class="btn bo bsm" onclick="editCursoNotes(${c.id})">📝 Notas</button>
+          <button class="btn bd bsm" onclick="delCurso(${c.id})">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('')+'</div>';
+  el.innerHTML=html;
+}
+function filterCursos(){renderCursos();}
+async function toggleCursoAula(id,mi,ai){
+  const c=await dbGet('cursos',id); if(!c||!c.modulos?.[mi]?.aulas?.[ai])return;
+  c.modulos[mi].aulas[ai].concluida=!c.modulos[mi].aulas[ai].concluida;
+  c.atualizadoEm=Date.now(); await dbPut('cursos',c); renderCursos();
+}
+async function markCursoModulo(id,mi,done=true){
+  const c=await dbGet('cursos',id); if(!c||!c.modulos?.[mi])return;
+  (c.modulos[mi].aulas||[]).forEach(a=>a.concluida=done);
+  c.atualizadoEm=Date.now(); await dbPut('cursos',c); renderCursos(); toast('✅ Progresso do módulo salvo','ok');
+}
+async function saveCursoProgress(id){
+  const c=await dbGet('cursos',id); if(c){c.atualizadoEm=Date.now();await dbPut('cursos',c);} toast('✅ Progresso salvo','ok');
+}
+async function editCursoNotes(id){
+  const c=await dbGet('cursos',id); if(!c)return;
+  showModal('Notas do Curso',`<div class="fg"><label class="fl">Observações / plano de estudo</label><textarea id="cunotes" class="fi" style="min-height:150px">${(c.observacoes||'').replace(/</g,'&lt;')}</textarea></div>`,[
+    {l:'Cancelar',c:'bo',fn:()=>{}},
+    {l:'Salvar notas',c:'bp',fn:async()=>{c.observacoes=document.getElementById('cunotes').value;c.atualizadoEm=Date.now();await dbPut('cursos',c);renderCursos();toast('✅ Notas salvas','ok');}}
+  ]);
+}
+async function delCurso(id){
+  showModal('Remover Curso','Tem certeza? O curso e seu progresso serão apagados.',[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Remover',c:'bd',fn:async()=>{await dbDel('cursos',id);cursos=await dbAll('cursos');renderCursos();toast('Curso removido');}}]);
+}
+function downloadCursoTemplate(){
+  const modelo={
+    titulo:'Curso Completo de Direito Constitucional',
+    plataforma:'Estratégia Concursos',
+    professor:'Professor Exemplo',
+    categoria:'Direito Constitucional',
+    cargaHoraria:40,
+    inicio:'2026-05-13',
+    fim:'2026-08-30',
+    status:'Em andamento',
+    link:'https://exemplo.com/curso',
+    observacoes:'Estudar 1 módulo por semana e revisar aos domingos.',
+    modulos:[
+      {nome:'Teoria Constitucional',aulas:[{titulo:'Constituição: conceito e classificações',duracao:45,link:'',concluida:false},{titulo:'Poder Constituinte',duracao:50,link:'',concluida:false}]},
+      {nome:'Direitos Fundamentais',aulas:[{titulo:'Direitos e garantias individuais',duracao:60,link:'',concluida:false},{titulo:'Direitos sociais e nacionalidade',duracao:55,link:'',concluida:false}]}
+    ]
+  };
+  const blob=new Blob([JSON.stringify(modelo,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='modelo_curso.json';a.click();URL.revokeObjectURL(a.href);
+  toast('✅ Modelo de curso baixado!','ok');
+}
+async function handleCursoFile(e){
+  const files=[...e.target.files]; e.target.value=''; if(!files.length)return;
+  let added=0;
+  for(const file of files){
+    try{
+      let data=JSON.parse(await file.text());
+      if(!Array.isArray(data))data=[data];
+      for(const d of data){await dbAdd('cursos',normalizeCurso(d,file.name));added++;}
+    }catch(err){toast('❌ Erro em '+file.name+': '+err.message,'err');}
+  }
+  cursos=await dbAll('cursos'); renderCursos(); if(added)toast(`✅ ${added} curso(s) importado(s)!`,'ok');
+}
 
 // ══════════════════════════════════════════════════════════
 //  VIDEOAULAS
@@ -2707,6 +2955,34 @@ async function downloadCadPDF(id){
         .q-ans { font-weight: bold; color: #10b981; margin-top: 10px; }
         .footer { margin-top: 50px; font-size: 12px; color: #8b90aa; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
       .active-day{box-shadow:0 0 15px var(--glow);}
+
+
+/* CURSOS */
+.course-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
+.course-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--ss);overflow:hidden;display:flex;flex-direction:column;min-width:0;}
+.course-head{padding:14px 15px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,var(--ac-lt),#f8fafc);display:flex;gap:10px;align-items:flex-start;}
+.course-icon{font-size:25px;flex-shrink:0;}
+.course-body{padding:13px 15px;display:flex;flex-direction:column;gap:10px;flex:1;}
+.course-meta{display:flex;flex-wrap:wrap;gap:5px;}
+.course-mod{border:1px solid var(--border);border-radius:9px;background:var(--surf2);overflow:hidden;}
+.course-mod-title{font-weight:700;font-size:12px;padding:8px 10px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:7px;}
+.course-aula{display:flex;align-items:center;gap:8px;padding:7px 10px;border-top:1px solid rgba(227,230,240,.65);font-size:12px;min-width:0;}
+.course-aula:first-child{border-top:0;}
+.course-aula-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.course-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:auto;padding-top:4px;}
+
+@media (max-width:768px){
+  .course-stats{grid-template-columns:repeat(2,1fr);}
+  .course-head{padding:12px;}
+  .course-body{padding:12px;}
+  .course-actions .btn{flex:1 1 calc(50% - 7px);}
+}
+@media (max-width:480px){
+  .course-stats{grid-template-columns:1fr;}
+  .course-actions{flex-direction:column;}
+  .course-actions .btn{width:100%;}
+}
+
 </style>
     </head>
     <body>
@@ -2897,41 +3173,45 @@ function downloadCCTemplate(){
 }
 
 async function handleCCFile(e){
-  const file=e.target.files[0];
+  const files=[...e.target.files];
   e.target.value='';
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=async ev=>{
+  if(!files.length)return;
+  let total=0;
+  for(const file of files){
+    const text=await file.text();
     try{
-      const d=JSON.parse(ev.target.result);
-      if(!d.nome)throw new Error('Campo "nome" obrigatório no JSON');
-      const mats=(d.materias||[]).map(m=>typeof m==='string'?{nome:m,feita:false}:{...m,feita:m.feita||false});
-      await dbAdd('concursos',{
-        nome:d.nome,
-        orgao:d.orgao||'',
-        cargo:d.cargo||'',
-        status:d.status||'Estudando',
-        vagas:+d.vagas||0,
-        salario:d.salario||'',
-        dataProva:d.dataProva||'',
-        horaProva:d.horaProva||'',
-        inscricaoFim:d.inscricaoFim||'',
-        edital:d.edital||'',
-        local:d.local||'',
-        obs:d.obs||'',
-        materias:mats,
-        hasTAF:!!d.hasTAF,
-        criadoEm:Date.now()
-      });
-      concursos=await dbAll('concursos');
-      renderCC(); renderCursos();renderDash();updateCronoSel();
-      toast(`✅ Concurso "${d.nome}" importado com sucesso!`,'ok');
-      setTimeout(()=>go('cronograma'),500);
+      let data=JSON.parse(text);
+      if(!Array.isArray(data))data=[data];
+      for(const d of data){
+        if(!d.nome&&!d.titulo)throw new Error('Campo "nome" obrigatório no JSON');
+        const mats=(d.materias||[]).map(m=>typeof m==='string'?{nome:m,feita:false}:{...m,feita:!!m.feita});
+        await dbAdd('concursos',{
+          tipo:'concurso',
+          nome:d.nome||d.titulo,
+          orgao:d.orgao||'',
+          cargo:d.cargo||'',
+          status:d.status||'Estudando',
+          vagas:+d.vagas||0,
+          salario:d.salario||'',
+          dataProva:d.dataProva||'',
+          horaProva:d.horaProva||'08:00',
+          inscricaoFim:d.inscricaoFim||'',
+          edital:d.edital||'',
+          local:d.local||'',
+          obs:d.obs||'',
+          materias:mats,
+          hasTAF:!!d.hasTAF,
+          criadoEm:Date.now()
+        });
+        total++;
+      }
     }catch(err){
-      toast('❌ Erro ao importar: '+err.message,'err');
+      toast('❌ Erro ao importar '+file.name+': '+err.message,'err');
     }
-  };
-  reader.readAsText(file);
+  }
+  concursos=await dbAll('concursos');
+  renderCC();renderDash();updateCronoSel();
+  if(total){toast(`✅ ${total} concurso(s) importado(s) com sucesso!`,'ok');setTimeout(()=>go('concursos'),350);}
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2944,6 +3224,7 @@ async function boot(){
   results=await dbAll('resultados');
   concursos=await dbAll('concursos');
   vids=await dbAll('videoaulas');
+  cursos=await dbAll('cursos');
   await updateCronoSel();
   renderDash();
   await initNotifBadge();
@@ -2959,7 +3240,7 @@ function toggleHint(id){
   try{localStorage.setItem('hint_'+id,box.classList.contains('open')?'1':'0');}catch(e){}
 }
 function restoreHints(){
-  ['hint-concursos','hint-videoaulas','hint-simulados'].forEach(id=>{
+  ['hint-concursos','hint-cursos','hint-videoaulas','hint-simulados'].forEach(id=>{
     try{
       const el=document.getElementById(id);
       if(!el)return;
@@ -3000,7 +3281,7 @@ function downloadSimTemplate(){
 async function exportBackup() {
   try {
     const backup = {};
-    const stores = ['simulados', 'resultados', 'cadernos', 'videoaulas', 'concursos', 'taf', 'coachlog', 'flashdecks', 'user', 'checklist'];
+    const stores = ['simulados', 'resultados', 'cadernos', 'videoaulas', 'concursos', 'cursos', 'taf', 'coachlog', 'flashdecks', 'user', 'checklist'];
     for (const store of stores) {
       backup[store] = await dbAll(store);
     }
