@@ -677,12 +677,14 @@ textarea.fi{resize:vertical;min-height:70px;}
 <div class="panel" id="panel-cronograma">
   <div class="sh">
     <div><div class="stitle">📅 Cronograma de Estudos</div><div class="ssub">Plano automático gerado até o dia da prova</div></div>
-    <div class="shr">
+    <div class="shr" style="align-items:center">
       <select class="fi" style="width:auto;min-width:200px" id="crono-sel" onchange="renderCronograma()">
         <option value="">— Selecione um concurso —</option>
       </select>
+      <button class="btn bo bsm" onclick="regenerarCronograma()" title="Regenerar cronograma do zero">🔄 Regenerar</button>
     </div>
   </div>
+  <div id="crono-status" style="display:none;margin-bottom:10px;padding:9px 14px;background:var(--ok-lt);border:1px solid var(--ok);border-radius:var(--rsm);font-size:12px;color:var(--ok);font-weight:600">✅ Cronograma salvo — gerado automaticamente ao cadastrar o concurso</div>
   <div id="crono-area"><div class="empty"><div class="eic">📅</div><div class="et">Selecione um concurso</div><div class="es">Escolha acima ou <span style="color:var(--ac);cursor:pointer" onclick="go('concursos')">cadastre um concurso</span></div></div></div>
 </div>
 
@@ -1017,7 +1019,7 @@ window.addEventListener('error',e=>{
 //  IndexedDB
 // ══════════════════════════════════════════════════════════
 let DB;
-function openDB(){return new Promise((ok,fail)=>{const r=indexedDB.open('MQv6',3);r.onupgradeneeded=e=>{const d=e.target.result;['simulados','resultados','cadernos','videoaulas','concursos','cursos','taf','coachlog','flashdecks','examSessions'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id',autoIncrement:true});});if(!d.objectStoreNames.contains('user'))d.createObjectStore('user',{keyPath:'key'});if(!d.objectStoreNames.contains('checklist'))d.createObjectStore('checklist',{keyPath:'key'});};r.onsuccess=e=>{DB=e.target.result;ok();};r.onerror=()=>fail(r.error);});}
+function openDB(){return new Promise((ok,fail)=>{const r=indexedDB.open('MQv6',4);r.onupgradeneeded=e=>{const d=e.target.result;['simulados','resultados','cadernos','videoaulas','concursos','cursos','taf','coachlog','flashdecks','examSessions','cronogramas'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id',autoIncrement:true});});if(!d.objectStoreNames.contains('user'))d.createObjectStore('user',{keyPath:'key'});if(!d.objectStoreNames.contains('checklist'))d.createObjectStore('checklist',{keyPath:'key'});};r.onsuccess=e=>{DB=e.target.result;ok();};r.onerror=()=>fail(r.error);});}
 const T=(s,m='readonly')=>DB.transaction(s,m).objectStore(s);
 const dbAll=s=>new Promise((ok,f)=>{const r=T(s).getAll();r.onsuccess=()=>ok(r.result);r.onerror=()=>f(r.error);});
 const dbGet=(s,k)=>new Promise((ok,f)=>{const r=T(s).get(k);r.onsuccess=()=>ok(r.result);r.onerror=()=>f(r.error);});
@@ -1033,7 +1035,7 @@ let filterRefType='', filterRefId=null;
 let user={key:'profile',name:'Estudante',xp:20,level:1,coins:7660};
 let examSim=null,qi=0,answers={},revMode=false,secs=0,timerID=null;
 let autoSaveInterval=null; // Para salvar automaticamente o progresso
-let qDF='',vaDF=''; // filtros ativos
+let qDF='',vaDF='',currentVaFilter=''; // filtros ativos
 const COLORS=['#6c5ce7','#10b981','#ef4444','#f59e0b','#3b82f6','#ec4899','#8b5cf6','#06b6d4'];
 const ICONS=['📖','⚖️','🏛️','📜','🔬','🧮','📝','🎓','🔎','📑'];
 const DS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -1195,7 +1197,7 @@ document.getElementById('mol').addEventListener('click',e=>{if(e.target.id==='mo
 // ══════════════════════════════════════════════════════════
 //  CONCURSOS
 // ══════════════════════════════════════════════════════════
-function handleCCFile(e){[...e.target.files].forEach(f=>{const r=new FileReader();r.onload=async ev=>{try{let d=JSON.parse(ev.target.result);if(!Array.isArray(d))d=[d];for(const x of d){const mats=(x.materias||[]).map(m=>({nome:typeof m==='string'?m:m.nome,feita:m.feita||false}));await dbAdd('concursos',{nome:x.nome||x.titulo||f.name.replace('.json',''),orgao:x.orgao||'',cargo:x.cargo||'',status:x.status||'Estudando',vagas:x.vagas||0,salario:x.salario||'',dataProva:x.dataProva||'',horaProva:x.horaProva||'08:00',inscricaoFim:x.inscricaoFim||'',edital:x.edital||'',local:x.local||'',obs:x.obs||'',materias:mats,hasTAF:x.hasTAF||false,criadoEm:Date.now()});}concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();toast('✅ Concurso(s) importado(s)!','ok');}catch(err){toast('❌ '+err.message,'err');}};r.readAsText(f);});e.target.value='';}
+// handleCCFile defined below
 
 async function openAddCC(){
   showModal('Cadastrar Concurso',`
@@ -1226,6 +1228,7 @@ async function openAddCC(){
       if(!n){toast('Informe o nome','err');return;}
       if(!d){toast('Informe a data da prova','err');return;}
       const mats=document.getElementById('cm').value.split(',').map(m=>m.trim()).filter(Boolean).map(m=>({nome:m,feita:false}));
+      const hasTAFval = document.getElementById('ctaf').value==='1';
       const id = await dbAdd('concursos',{
         tipo: 'concurso',
         nome: n,
@@ -1241,10 +1244,10 @@ async function openAddCC(){
         local: document.getElementById('cl').value,
         obs: document.getElementById('cob').value,
         materias: mats,
-        hasTAF: !!document.getElementById('ctaf').value,
+        hasTAF: hasTAFval,
         criadoEm: Date.now()
       });
-      await gerarCronogramaAuto(id, mats, !!document.getElementById('ctaf').value);
+      await gerarCronogramaAuto(id, mats, hasTAFval);
       concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();
       toast('✅ Concurso cadastrado! Cronograma gerado.','ok');
       setTimeout(()=>go('cronograma'),400);
@@ -1292,7 +1295,7 @@ async function renderCC(){
         <button class="btn bp bsm" onclick="filterRefType='concurso';filterRefId=${c.id};go('videoaulas')">🎬 Aulas</button>
         <button class="btn bok bsm" onclick="filterRefType='concurso';filterRefId=${c.id};go('simulados')">📋 Simulados</button>
         ${c.edital?`<a href="${c.edital}" target="_blank" class="btn bo bsm">📄 Edital</a>`:''}
-        <button class="btn bo bsm" onclick="editCC(${c.id})">✏️ Editar</button><button class="btn bo bsm" onclick="go('cronograma')">📅 Cronograma</button>
+        <button class="btn bo bsm" onclick="editCC(${c.id})">✏️ Editar</button><button class="btn bo bsm" onclick="viewCronogramaCC(${c.id})">📅 Cronograma</button>
         ${c.hasTAF?`<button class="btn btaf bsm" onclick="go('taf')">🏃 TAF</button>`:''}
         <button class="btn bd bsm" onclick="delCC(${c.id})" style="margin-left:auto">🗑</button>
       </div>
@@ -1339,7 +1342,7 @@ async function editCC(id){
       c.local=document.getElementById('cl').value;
       c.salario=document.getElementById('cs').value;
       c.vagas=+document.getElementById('cv').value||0;
-      c.hasTAF=!!document.getElementById('ctaf').value;
+      c.hasTAF=document.getElementById('ctaf').value==='1';
       c.edital=document.getElementById('ce').value;
       c.obs=document.getElementById('cob').value;
       
@@ -1351,16 +1354,18 @@ async function editCC(id){
       c.materias = matsAtualizadas;
       
       await dbPut('concursos',c);
+      // Regenerate schedule when concurso is updated
+      await gerarCronogramaAuto(c.id,c.materias||[],c.hasTAF||false);
       concursos=await dbAll('concursos');
       renderCC();
       renderDash();
       updateCronoSel();
-      toast('✅ Concurso atualizado!','ok');
+      toast('✅ Concurso atualizado! Cronograma recalculado.','ok');
     }}
   ]);
 }
 
-async function delCC(id){showModal('Remover Concurso','Tem certeza? Os dados serão apagados.',[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Remover',c:'bd',fn:async()=>{await dbDel('concursos',id);concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();toast('Concurso removido');}}]);}
+async function delCC(id){showModal('Remover Concurso','Tem certeza? Os dados serão apagados.',[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Remover',c:'bd',fn:async()=>{await dbDel('concursos',id);const cronos=await dbAll('cronogramas');const cr=cronos.find(c=>c.concursoId===id);if(cr)await dbDel('cronogramas',cr.id);concursos=await dbAll('concursos');renderCC();renderDash();updateCronoSel();toast('Concurso removido');}}]);}
 
 // ══════════════════════════════════════════════════════════
 //  CRONOGRAMA
@@ -1380,14 +1385,31 @@ async function renderCronograma(){
   const cid=+sel.value;
   const c=concursos.find(x=>x.id===cid);
   const el=document.getElementById('crono-area');
+  const statusEl=document.getElementById('crono-status');
+  if(statusEl)statusEl.style.display='none';
   if(!c){el.innerHTML='<div class="empty"><div class="eic">📅</div><div class="et">Selecione um concurso acima</div><div class="es">Ou <span style="color:var(--ac);cursor:pointer" onclick="go(\'concursos\')">cadastre um concurso</span></div></div>';return;}
+  if(!c.dataProva){el.innerHTML='<div class="empty"><div class="eic">⚠️</div><div class="et">Concurso sem data da prova</div><div class="es"><button class="btn bp bsm" onclick="editCC('+c.id+')">Editar concurso</button></div></div>';return;}
   const provaD=new Date(c.dataProva+'T12:00:00');
   const startD=today();
   const total=diffD(toISO(provaD),toISO(startD));
-  if(total<0){el.innerHTML='<div class="empty"><div class="eic">⏰</div><div class="et">Prova já realizada</div></div>';return;}
+  if(total<0){el.innerHTML='<div class="empty"><div class="eic">⏰</div><div class="et">Prova já realizada</div><div class="es">A prova deste concurso já ocorreu.</div></div>';return;}
   const mats=c.materias||[];
   const hasTAF=c.hasTAF||false;
-  const schedule=genSchedule(c,startD,provaD,mats,hasTAF);
+  // Load from DB or generate
+  let savedCrono=await getCronogramaForConcurso(c.id);
+  let schedule;
+  if(savedCrono){
+    schedule=savedCrono.schedule;
+    if(statusEl){
+      const dt=new Date(savedCrono.geradoEm);
+      statusEl.style.display='block';
+      statusEl.innerHTML='✅ Cronograma salvo · gerado em '+dt.toLocaleDateString('pt-BR')+' às '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    }
+  }else{
+    schedule=genSchedule(c,startD,provaD,mats,hasTAF);
+    await gerarCronogramaAuto(c.id,mats,hasTAF);
+    if(statusEl){statusEl.style.display='block';statusEl.innerHTML='📅 Cronograma gerado e salvo!';}
+  }
   el.innerHTML=buildCronoHTML(c,schedule,startD,provaD,total);
 }
 
@@ -1426,6 +1448,63 @@ function genSchedule(c,start,prova,mats,hasTAF){
     sched[ds]=tasks;
   }
   return sched;
+}
+
+// ══════════════════════════════════════════════════════════
+//  GERAR E SALVAR CRONOGRAMA AUTOMATICAMENTE
+// ══════════════════════════════════════════════════════════
+async function gerarCronogramaAuto(concursoId, mats, hasTAF) {
+  try {
+    const c = await dbGet('concursos', concursoId);
+    if (!c || !c.dataProva) return;
+    const startD = today();
+    const provaD = new Date(c.dataProva + 'T12:00:00');
+    const total = diffD(toISO(provaD), toISO(startD));
+    if (total < 0) return;
+    const schedule = genSchedule(c, startD, provaD, mats || [], hasTAF || false);
+    // Save/update cronograma in DB
+    const cronos = await dbAll('cronogramas');
+    const existing = cronos.find(cr => cr.concursoId === concursoId);
+    const cronData = {
+      concursoId,
+      schedule,
+      geradoEm: Date.now(),
+      dataProva: c.dataProva,
+      mats: mats || [],
+      hasTAF: hasTAF || false
+    };
+    if (existing) {
+      await dbPut('cronogramas', { ...cronData, id: existing.id });
+    } else {
+      await dbAdd('cronogramas', cronData);
+    }
+  } catch (err) {
+    console.warn('Erro ao gerar cronograma:', err);
+  }
+}
+
+async function getCronogramaForConcurso(concursoId) {
+  try {
+    const cronos = await dbAll('cronogramas');
+    return cronos.find(cr => cr.concursoId === concursoId) || null;
+  } catch { return null; }
+}
+
+async function viewCronogramaCC(id){
+  const sel=document.getElementById('crono-sel');
+  go('cronograma');
+  setTimeout(()=>{if(sel){sel.value=id;renderCronograma();}},150);
+}
+
+async function regenerarCronograma(){
+  const sel=document.getElementById('crono-sel');
+  const cid=+sel.value;
+  if(!cid){toast('Selecione um concurso primeiro','err');return;}
+  const c=concursos.find(x=>x.id===cid);
+  if(!c){return;}
+  await gerarCronogramaAuto(c.id,c.materias||[],c.hasTAF||false);
+  await renderCronograma();
+  toast('📅 Cronograma regenerado e salvo!','ok');
 }
 
 function buildCronoHTML(c,sched,start,prova,total){
@@ -2380,11 +2459,10 @@ async function delVA(id){await dbDel('videoaulas',id);vids=await dbAll('videoaul
 //  VIDEO PLAYER
 // ══════════════════════════════════════════════════════════
 let currentVidId=null;
-function getYTEmbedURL(url){
+function getYTEmbedURL(url,startSecs=0){
   try{
     const m=url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
-    if(m)return`https://www.youtube.com/embed/${m[1]}?autoplay=1&rel=0`;
-    // Suporte a outros players genéricos
+    if(m){const s=startSecs>0?`&start=${Math.floor(startSecs)}`:'';return`https://www.youtube.com/embed/${m[1]}?autoplay=1&rel=0${s}`;}
     return url;
   }catch{return url;}
 }
@@ -2397,18 +2475,26 @@ async function playVid(id){
   const btn=document.getElementById('vidbtnmark');
   if(v.done){btn.textContent='↩ Desmarcar concluída';btn.className='vidbtnmark bo';}
   else{btn.textContent='✓ Marcar como assistida';btn.className='vidbtnmark bok';}
-  document.getElementById('vidframe').src=getYTEmbedURL(v.url);
+  const startSecs=v.lastTime||0;
+  const embedURL=getYTEmbedURL(v.url,startSecs);
+  const vf=document.getElementById('vidframe');
+  vf.innerHTML=`<iframe src="${embedURL}" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%"></iframe>`;
   document.getElementById('vidov').classList.add('open');
   document.body.style.overflow='hidden';
+  startSimpleProgressTracking(id);
 }
 function closeVid(){
+  stopProgressTracking();
+  if(ytPlayer&&ytPlayer.pauseVideo){try{ytPlayer.pauseVideo();}catch(e){}}
   document.getElementById('vidov').classList.remove('open');
   document.getElementById('vidov').classList.remove('cinema');
-  document.getElementById('vidframe').src='';
+  const vf=document.getElementById('vidframe');
+  if(vf)vf.innerHTML='';
   document.body.style.overflow='';
   currentVidId=null;
   cinemaMode=false;
-  document.getElementById('btnCinema').textContent='🎬 Cinema';
+  const bc=document.getElementById('btnCinema');
+  if(bc)bc.textContent='🎬 Cinema';
 }
 async function markVidDone(){
   if(!currentVidId)return;
@@ -2961,7 +3047,7 @@ function renderFCDeckCard(deckTitle){
 
 function fcStep(d){fcIdx=(fcIdx+d+fcList.length)%fcList.length;renderFCCard();}
 function fcMark(t){if(t==='easy')fcEasy++;else fcHard++;addXP(t==='easy'?3:1);fcStep(1);}
-function fcDeckStep(d){fcDeckIdx=(fcDeckIdx+d+fcDeckList.length)%fcDeckList.length;renderFCDeckCard();}
+function fcDeckStep(d){fcDeckIdx=(fcDeckIdx+d+fcDeckList.length)%fcDeckList.length;renderFCDeckCard('');}
 function fcDeckMark(t){if(t==='easy')fcEasy++;else fcHard++;addXP(t==='easy'?3:1);fcDeckStep(1);}
 
 // Importar deck de flashcards
@@ -3153,36 +3239,7 @@ async function downloadCadPDF(id){
         .q-num { font-weight: bold; color: #6c5ce7; margin-bottom: 8px; }
         .q-ans { font-weight: bold; color: #10b981; margin-top: 10px; }
         .footer { margin-top: 50px; font-size: 12px; color: #8b90aa; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
-      .active-day{box-shadow:0 0 15px var(--glow);}
-
-
-/* CURSOS */
-.course-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
-.course-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--ss);overflow:hidden;display:flex;flex-direction:column;min-width:0;}
-.course-head{padding:14px 15px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,var(--ac-lt),#f8fafc);display:flex;gap:10px;align-items:flex-start;}
-.course-icon{font-size:25px;flex-shrink:0;}
-.course-body{padding:13px 15px;display:flex;flex-direction:column;gap:10px;flex:1;}
-.course-meta{display:flex;flex-wrap:wrap;gap:5px;}
-.course-mod{border:1px solid var(--border);border-radius:9px;background:var(--surf2);overflow:hidden;}
-.course-mod-title{font-weight:700;font-size:12px;padding:8px 10px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:7px;}
-.course-aula{display:flex;align-items:center;gap:8px;padding:7px 10px;border-top:1px solid rgba(227,230,240,.65);font-size:12px;min-width:0;}
-.course-aula:first-child{border-top:0;}
-.course-aula-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.course-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:auto;padding-top:4px;}
-
-@media (max-width:768px){
-  .course-stats{grid-template-columns:repeat(2,1fr);}
-  .course-head{padding:12px;}
-  .course-body{padding:12px;}
-  .course-actions .btn{flex:1 1 calc(50% - 7px);}
-}
-@media (max-width:480px){
-  .course-stats{grid-template-columns:1fr;}
-  .course-actions{flex-direction:column;}
-  .course-actions .btn{width:100%;}
-}
-
-</style>
+      </style>
     </head>
     <body>
       <h1>${c.nome}</h1>
@@ -3212,7 +3269,7 @@ async function downloadCadPDF(id){
     // win.close(); // Opcional: fechar após imprimir
   }, 500);
 }
-async function saveQCard(){const cads=await dbAll('cadernos');if(!cads.length){toast('Crie um caderno primeiro','err');return;}showModal('Salvar no Caderno',`<div class="fg"><label class="fl">Caderno</label><select id="selcad" class="fi">${cads.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('')}</select></div>`,[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Salvar',c:'bp',fn:async()=>{const id=+document.getElementById('selcad').value;const c=await dbGet('cadernos',id);const q=examSim.questoes[qi];if(!c.questoes)c.questoes=[];if(!c.questoes.some(x=>x.numero===q.numero&&x.enunciado===q.enunciado)){c.questoes.push({...q,_titulo:examSim.titulo});await dbPut('cadernos',c);toast('🔖 Questão salva!','ok');}else toast('Já está neste caderno','err');}}]);}
+async function saveQCard(){if(!examSim||!examSim.questoes[qi]){toast('Nenhuma questão ativa','err');return;}const cads=await dbAll('cadernos');if(!cads.length){toast('Crie um caderno primeiro','err');return;}showModal('Salvar no Caderno',`<div class="fg"><label class="fl">Caderno</label><select id="selcad" class="fi">${cads.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('')}</select></div>`,[{l:'Cancelar',c:'bo',fn:()=>{}},{l:'Salvar',c:'bp',fn:async()=>{const id=+document.getElementById('selcad').value;const c=await dbGet('cadernos',id);const q=examSim.questoes[qi];if(!c.questoes)c.questoes=[];if(!c.questoes.some(x=>x.numero===q.numero&&x.enunciado===q.enunciado)){c.questoes.push({...q,_titulo:examSim.titulo});await dbPut('cadernos',c);toast('🔖 Questão salva!','ok');}else toast('Já está neste caderno','err');}}]);}
 
 // ══════════════════════════════════════════════════════════
 //  NOTIFICATIONS (SININHO)
@@ -3409,6 +3466,12 @@ async function handleCCFile(e){
     }
   }
   concursos=await dbAll('concursos');
+  // Generate schedules for all imported concursos
+  for(const c of concursos){
+    if(c.dataProva&&!await getCronogramaForConcurso(c.id)){
+      await gerarCronogramaAuto(c.id,c.materias||[],c.hasTAF||false);
+    }
+  }
   renderCC();renderDash();updateCronoSel();
   if(total){toast(`✅ ${total} concurso(s) importado(s) com sucesso!`,'ok');setTimeout(()=>go('concursos'),350);}
 }
@@ -3425,6 +3488,13 @@ async function boot(){
   vids=await dbAll('videoaulas');
   cursos=await dbAll('cursos');
   await updateCronoSel();
+  // Auto-generate missing cronogramas on startup
+  for(const c of concursos){
+    if(c.dataProva){
+      const exists=await getCronogramaForConcurso(c.id);
+      if(!exists)await gerarCronogramaAuto(c.id,c.materias||[],c.hasTAF||false);
+    }
+  }
   renderDash();
   await initNotifBadge();
   // Refresh notifications every 5 minutes
@@ -3480,7 +3550,7 @@ function downloadSimTemplate(){
 async function exportBackup() {
   try {
     const backup = {};
-    const stores = ['simulados', 'resultados', 'cadernos', 'videoaulas', 'concursos', 'cursos', 'taf', 'coachlog', 'flashdecks', 'user', 'checklist'];
+    const stores = ['simulados', 'resultados', 'cadernos', 'videoaulas', 'concursos', 'cursos', 'taf', 'coachlog', 'flashdecks', 'user', 'checklist', 'cronogramas'];
     for (const store of stores) {
       backup[store] = await dbAll(store);
     }
@@ -3531,51 +3601,27 @@ async function importBackup(e) {
 
 let ytPlayer = null;
 let progressInterval = null;
+let simpleProgressInterval = null;
 
 function onYouTubeIframeAPIReady() {
   console.log('YouTube API Ready');
 }
 
-async function playVid(id) {
-  const v = await dbGet('videoaulas', id);
-  if (!v) return;
-  currentVidId = id;
-  document.getElementById('vidtitle').textContent = v.titulo;
-  document.getElementById('vidmeta').textContent = (v.canal ? v.canal + ' · ' : '') + (v.materia ? v.materia : '') + (v.duracao ? ' · ' + v.duracao + 'min' : '');
-  
-  const btn = document.getElementById('vidbtnmark');
-  if (v.done) { btn.textContent = '↩ Desmarcar concluída'; btn.className = 'vidbtnmark bo'; }
-  else { btn.textContent = '✓ Marcar como assistida'; btn.className = 'vidbtnmark bok'; }
-
-  const videoId = getYTId(v.url);
-  const startSeconds = v.lastTime || 0;
-
-  document.getElementById('vidov').classList.add('open');
-  document.body.style.overflow = 'hidden';
-
-  // Sempre limpa o container e recria o player para garantir o carregamento imediato do progresso
-  document.getElementById('vidframe').innerHTML = '<div id="yt-player-container"></div>';
-  ytPlayer = new YT.Player('yt-player-container', {
-    height: '100%',
-    width: '100%',
-    videoId: videoId,
-    playerVars: {
-      'autoplay': 1,
-      'rel': 0,
-      'start': startSeconds
-    },
-    events: {
-      'onReady': (event) => {
-        if (startSeconds > 0) event.target.seekTo(startSeconds);
-        event.target.playVideo();
-      },
-      'onStateChange': (event) => {
-        if (event.data == YT.PlayerState.PLAYING) startProgressTracking();
-        else stopProgressTracking();
-      }
-    }
-  });
+function startSimpleProgressTracking(vidId){
+  clearInterval(simpleProgressInterval);
+  let elapsed=0;
+  simpleProgressInterval=setInterval(async()=>{
+    elapsed+=5;
+    const v=await dbGet('videoaulas',vidId);
+    if(v){v.lastTime=(v.lastTime||0)+5;await dbPut('videoaulas',v);}
+  },5000);
 }
+function stopProgressTracking(){
+  clearInterval(progressInterval);clearInterval(simpleProgressInterval);
+  progressInterval=null;simpleProgressInterval=null;
+}
+
+// playVid defined above — YouTube API version removed to avoid duplicate
 
 function startProgressTracking() {
   if (progressInterval) return;
@@ -3598,13 +3644,7 @@ function stopProgressTracking() {
   progressInterval = null;
 }
 
-// Sobrescrever a função closeVid original
-const originalCloseVid = closeVid;
-closeVid = function() {
-  stopProgressTracking();
-  if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
-  originalCloseVid();
-};
+// closeVid override removed — logic merged into main closeVid function
 
 
 window.addEventListener('beforeunload', (e) => {
