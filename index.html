@@ -537,54 +537,8 @@ textarea.fi{resize:vertical;min-height:70px;}
 
 
 
-/* ── REPETIÇÃO ESPAÇADA BUTTONS ── */
-.sr-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px;}
-.sr-btn{padding:10px 20px;border-radius:var(--rsm);font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all .14s;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:80px;}
-.sr-again{background:var(--err);color:#fff;} .sr-again:hover{background:#dc2626;}
-.sr-hard{background:var(--warn);color:#fff;} .sr-hard:hover{background:#d97706;}
-.sr-good{background:var(--info);color:#fff;} .sr-good:hover{background:#2563eb;}
-.sr-easy{background:var(--ok);color:#fff;} .sr-easy:hover{background:#059669;}
-.sr-interval{font-size:10px;opacity:.85;font-weight:500;}
-/* ── BADGES ── */
-.badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
-.badge-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center;box-shadow:var(--ss);transition:all .18s;}
-.badge-card.earned{border-color:var(--gold);background:linear-gradient(135deg,var(--gold-lt),var(--surf));box-shadow:0 4px 16px rgba(245,158,11,.2);}
-.badge-card.locked{opacity:.5;filter:grayscale(0.7);}
-.badge-ic{font-size:36px;margin-bottom:7px;}
-.badge-name{font-weight:700;font-size:13px;margin-bottom:3px;}
-.badge-desc{font-size:11px;color:var(--muted);line-height:1.4;}
-.badge-earned-tag{font-size:10px;font-weight:700;color:var(--gold);margin-top:5px;}
-/* ── STREAK ── */
-.streak-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(90deg,#f59e0b,#fb923c);color:#fff;padding:7px 14px;border-radius:20px;font-weight:700;font-size:13px;box-shadow:0 3px 10px rgba(245,158,11,.35);}
-/* ── HEATMAP ── */
-.heatmap-wrap{overflow-x:auto;padding-bottom:8px;}
-.heatmap-grid{display:flex;gap:3px;}
-.heatmap-col{display:flex;flex-direction:column;gap:3px;}
-.hm-cell{width:12px;height:12px;border-radius:2px;background:var(--border);}
-.hm-0{background:var(--border)!important;}
-.hm-1{background:#c4b5fd!important;}
-.hm-2{background:#8b5cf6!important;}
-.hm-3{background:#6c5ce7!important;}
-.hm-4{background:#4c1d95!important;}
-/* ── BANCO EXTERNO CARDS ── */
-.bq-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;box-shadow:var(--ss);}
-.bq-card:hover{border-color:var(--ac);}
-.bq-enunciado{font-size:13px;line-height:1.65;margin-bottom:10px;color:var(--txt);}
-.bq-opts{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px;}
-.bq-opt{font-size:12px;padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--surf2);cursor:pointer;line-height:1.4;}
-.bq-opt:hover{border-color:var(--ac);background:var(--ac-lt);}
-.bq-opt.cor{border-color:var(--ok);background:var(--ok-lt);}
-.bq-opt.wrg{border-color:var(--err);background:var(--err-lt);}
-.bq-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
-/* ── ANALYTICS CHART ── */
-.spark-line{fill:none;stroke:var(--ac);stroke-width:2;stroke-linejoin:round;}
-.spark-area{fill:url(#spark-grad);opacity:.3;}
-@media(max-width:768px){
-  .bq-opts{grid-template-columns:1fr;}
-  .badge-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}
-  .sr-btn{min-width:60px;padding:8px 12px;}
-}
-
+/* MOBILE FINAL OVERRIDES */
+@media (max-width:640px){
   html,body,#app,#main{width:100%;max-width:100%;overflow-x:hidden;}
   #content{width:100%;max-width:100%;overflow-x:hidden;padding:12px;}
   .g3,.g2,.ga,.course-stats{grid-template-columns:1fr!important;width:100%;}
@@ -649,8 +603,6 @@ textarea.fi{resize:vertical;min-height:70px;}
     <div class="nlbl">Análise</div>
     <div class="ni" data-p="estatisticas"><span class="ni-ic">📈</span>Estatísticas</div>
     <div class="ni" data-p="ranking"><span class="ni-ic">🏆</span>Rankings</div>
-    <div class="ni" data-p="conquistas"><span class="ni-ic">🎖️</span>Conquistas</div>
-    <div class="ni" data-p="bancoexterno"><span class="ni-ic">🗄️</span>Banco Externo</div>
     <div class="nlbl">Premium</div>
     <div class="ni" data-p="import"><span class="ni-ic">📥</span>Importar<span class="ni-b">PRO</span></div>
     <div class="ni" data-p="cadernos"><span class="ni-ic">📚</span>Cadernos</div>
@@ -699,19 +651,7 @@ textarea.fi{resize:vertical;min-height:70px;}
 <div class="panel active" id="panel-dashboard">
   <div class="sh">
     <div><div class="stitle">Olá, <span id="gname">Estudante</span>! 👋</div><div class="ssub">Painel completo de estudos para concursos</div></div>
-    <div class="shr" style="align-items:center">
-      <div id="ds-streak" style="display:none"></div>
-      <button class="btn bp" onclick="go('coach')">🤖 Coach</button>
-      <button class="btn bo" onclick="go('cronograma')">📅 Cronograma</button>
-    </div>
-  </div>
-  <!-- Alerta de revisão pendente -->
-  <div id="ds-sr-alert" style="display:none;background:linear-gradient(135deg,var(--ac-lt),#f5f3ff);border:1px solid var(--ac);border-radius:var(--r);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-    <div>
-      <div style="font-weight:700;font-size:13px;color:var(--ac)">⏱ Flashcards para revisar hoje</div>
-      <div style="font-size:12px;color:var(--txt2);margin-top:2px"><span id="ds-sr-count">0</span> cards aguardam revisão espaçada</div>
-    </div>
-    <button class="btn bp bsm" onclick="go('flashcards')">▶ Revisar agora</button>
+    <div class="shr"><button class="btn bp" onclick="go('coach')">🤖 Coach</button><button class="btn bo" onclick="go('cronograma')">📅 Cronograma</button></div>
   </div>
   <div class="g3" style="margin-bottom:14px">
     <div class="scard"><div class="slbl">Dias até a prova</div><div class="sval cerr" id="ds-dias">—</div><div class="schg muted" id="ds-nome" style="color:var(--muted)">Nenhum concurso</div></div>
@@ -913,28 +853,19 @@ textarea.fi{resize:vertical;min-height:70px;}
 <!-- ══════════ FLASHCARDS ══════════ -->
 <div class="panel" id="panel-flashcards">
   <div class="fc-panel-hdr">
-    <div><div class="stitle">🎴 Flashcards</div><div class="ssub">Estude com repetição espaçada (algoritmo SM-2)</div></div>
+    <div><div class="stitle">🎴 Flashcards</div><div class="ssub">Estude e memorize com revisão espaçada</div></div>
     <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
       <button class="btn bo bsm" onclick="downloadFCTemplate()">⬇️ Modelo JSON</button>
       <button class="btn bo bsm" onclick="document.getElementById('fc-fi').click()">📥 Importar Deck</button>
-      <button class="btn bp bsm" onclick="openCreateDeck()">+ Criar Deck</button>
       <input type="file" id="fc-fi" accept=".json" style="display:none" onchange="handleFCFile(event)">
     </div>
-  </div>
-  <!-- SR stats bar -->
-  <div id="fc-sr-bar" style="display:none;background:var(--surf);border:1px solid var(--border);border-radius:var(--rsm);padding:10px 14px;margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap">
-    <span style="font-size:12px;font-weight:600;color:var(--err)">🔴 Vencer hoje: <strong id="fc-due-count">0</strong></span>
-    <span style="font-size:12px;font-weight:600;color:var(--ok)">✅ Aprendidos: <strong id="fc-learned-count">0</strong></span>
-    <span style="font-size:12px;font-weight:600;color:var(--ac)">📚 Total cards: <strong id="fc-total-count">0</strong></span>
   </div>
   <div class="fc-source-tabs" style="margin-bottom:14px">
     <div class="fc-source-tab on" onclick="fcSource('questoes',this)">📋 Das Questões</div>
     <div class="fc-source-tab" onclick="fcSource('deck',this)">🗂 Meus Decks</div>
-    <div class="fc-source-tab" onclick="fcSource('sr',this)">⏱ Revisão Espaçada</div>
   </div>
   <div id="fc-area"><div class="empty"><div class="eic">🎴</div><div class="et">Carregando…</div></div></div>
 </div>
-
 
 <!-- ══════════ TAF ══════════ -->
 <div class="panel" id="panel-taf">
@@ -992,75 +923,8 @@ textarea.fi{resize:vertical;min-height:70px;}
   <div style="margin-top:18px"><div style="font-family:'Sora',sans-serif;font-weight:700;margin-bottom:10px">Simulados importados</div><div id="imp-list"></div></div>
 </div>
 
-<!-- ══════════ CONQUISTAS ══════════ -->
-<div class="panel" id="panel-conquistas">
-  <div class="sh">
-    <div><div class="stitle">🎖️ Conquistas & Badges</div><div class="ssub">Desbloqueie recompensas com seus estudos</div></div>
-    <div class="shr" id="streak-display"></div>
-  </div>
-  <div id="badges-area"></div>
-</div>
-
-<!-- ══════════ BANCO EXTERNO ══════════ -->
-<div class="panel" id="panel-bancoexterno">
-  <div class="sh">
-    <div><div class="stitle">🗄️ Banco de Questões</div><div class="ssub">Filtre, estude e crie simulados com questões de concursos</div></div>
-  </div>
-  <!-- Filtros avançados -->
-  <div class="card" style="margin-bottom:14px">
-    <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:13px;margin-bottom:12px">🔍 Filtros Avançados</div>
-    <div class="g2" style="margin-bottom:10px">
-      <div class="fg" style="margin-bottom:0"><label class="fl">Disciplina</label>
-        <select class="fi" id="bq-disc" onchange="bqFilter()">
-          <option value="">Todas as disciplinas</option>
-          <option>Direito Constitucional</option><option>Direito Administrativo</option>
-          <option>Direito Penal</option><option>Direito Civil</option>
-          <option>Direito Processual Civil</option><option>Direito Processual Penal</option>
-          <option>Língua Portuguesa</option><option>Raciocínio Lógico</option>
-          <option>Matemática</option><option>Informática</option>
-          <option>Administração Pública</option><option>Contabilidade</option>
-          <option>Economia</option><option>Atualidades</option>
-        </select>
-      </div>
-      <div class="fg" style="margin-bottom:0"><label class="fl">Banca</label>
-        <select class="fi" id="bq-banca" onchange="bqFilter()">
-          <option value="">Todas as bancas</option>
-          <option>CESPE/CEBRASPE</option><option>FCC</option><option>VUNESP</option>
-          <option>FGV</option><option>IBFC</option><option>QUADRIX</option>
-          <option>IADES</option><option>INAZ</option><option>NC-UFPR</option>
-        </select>
-      </div>
-    </div>
-    <div class="g2" style="margin-bottom:10px">
-      <div class="fg" style="margin-bottom:0"><label class="fl">Nível de Dificuldade</label>
-        <select class="fi" id="bq-nivel" onchange="bqFilter()">
-          <option value="">Todos os níveis</option>
-          <option value="facil">🟢 Fácil</option>
-          <option value="medio">🟡 Médio</option>
-          <option value="dificil">🔴 Difícil</option>
-        </select>
-      </div>
-      <div class="fg" style="margin-bottom:0"><label class="fl">Tipo</label>
-        <select class="fi" id="bq-tipo" onchange="bqFilter()">
-          <option value="">Todos os tipos</option>
-          <option value="mc">Múltipla escolha</option>
-          <option value="cv">Certo/Errado</option>
-        </select>
-      </div>
-    </div>
-    <input class="sbar" style="margin-bottom:10px" type="text" id="bq-search" placeholder="🔍 Buscar no enunciado…" oninput="bqFilter()">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <button class="btn bp bsm" onclick="bqCreateSim()">📋 Criar Simulado com Filtros</button>
-      <button class="btn bo bsm" onclick="bqSaveFilter()">🔖 Salvar Filtro</button>
-      <button class="btn bo bsm" onclick="bqLoadFilter()">📂 Meus Filtros</button>
-      <span id="bq-count" style="font-size:12px;color:var(--muted);margin-left:4px"></span>
-    </div>
-    <div id="bq-saved-filters" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px"></div>
-  </div>
-  <div id="bq-area"></div>
-</div>
-
-
+<!-- ══════════ CADERNOS ══════════ -->
+<div class="panel" id="panel-cadernos">
   <div class="sh"><div><div class="stitle">📚 Meus Cadernos</div></div><div class="shr"><button class="btn bp" onclick="createCad()">+ Novo</button></div></div>
   <div id="cad-list"></div>
 </div>
@@ -1156,7 +1020,7 @@ window.addEventListener('error',e=>{
 //  IndexedDB
 // ══════════════════════════════════════════════════════════
 let DB;
-function openDB(){return new Promise((ok,fail)=>{const r=indexedDB.open('MQv7',5);r.onupgradeneeded=e=>{const d=e.target.result;['simulados','resultados','cadernos','videoaulas','concursos','cursos','taf','coachlog','flashdecks','examSessions','cronogramas','fcsr','badges','studylog'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id',autoIncrement:true});});if(!d.objectStoreNames.contains('user'))d.createObjectStore('user',{keyPath:'key'});if(!d.objectStoreNames.contains('checklist'))d.createObjectStore('checklist',{keyPath:'key'});};r.onsuccess=e=>{DB=e.target.result;ok();};r.onerror=()=>fail(r.error);});}
+function openDB(){return new Promise((ok,fail)=>{const r=indexedDB.open('MQv6',4);r.onupgradeneeded=e=>{const d=e.target.result;['simulados','resultados','cadernos','videoaulas','concursos','cursos','taf','coachlog','flashdecks','examSessions','cronogramas'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id',autoIncrement:true});});if(!d.objectStoreNames.contains('user'))d.createObjectStore('user',{keyPath:'key'});if(!d.objectStoreNames.contains('checklist'))d.createObjectStore('checklist',{keyPath:'key'});};r.onsuccess=e=>{DB=e.target.result;ok();};r.onerror=()=>fail(r.error);});}
 const T=(s,m='readonly')=>DB.transaction(s,m).objectStore(s);
 const dbAll=s=>new Promise((ok,f)=>{const r=T(s).getAll();r.onsuccess=()=>ok(r.result);r.onerror=()=>f(r.error);});
 const dbGet=(s,k)=>new Promise((ok,f)=>{const r=T(s).get(k);r.onsuccess=()=>ok(r.result);r.onerror=()=>f(r.error);});
@@ -1176,7 +1040,7 @@ let qDF='',vaDF='',currentVaFilter=''; // filtros ativos
 const COLORS=['#6c5ce7','#10b981','#ef4444','#f59e0b','#3b82f6','#ec4899','#8b5cf6','#06b6d4'];
 const ICONS=['📖','⚖️','🏛️','📜','🔬','🧮','📝','🎓','🔎','📑'];
 const DS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-const PTITLES={dashboard:'Dashboard',coach:'Coach Diário',cronograma:'Cronograma de Estudos',concursos:'Concursos',cursos:'Cursos',videoaulas:'Videoaulas',simulados:'Simulados',questoes:'Questões',flashcards:'Flashcards',taf:'TAF — Treinamento Físico',checklist:'Checklist da Prova',estatisticas:'Estatísticas',configuracoes:'Configurações',ranking:'Rankings',import:'Importar Simulado',cadernos:'Cadernos',conquistas:'Conquistas & Badges',bancoexterno:'Banco de Questões Externo'};
+const PTITLES={dashboard:'Dashboard',coach:'Coach Diário',cronograma:'Cronograma de Estudos',concursos:'Concursos',cursos:'Cursos',videoaulas:'Videoaulas',simulados:'Simulados',questoes:'Questões',flashcards:'Flashcards',taf:'TAF — Treinamento Físico',checklist:'Checklist da Prova',estatisticas:'Estatísticas',configuracoes:'Configurações',ranking:'Rankings',import:'Importar Simulado',cadernos:'Cadernos'};
 const today=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());};
 
 // ══════════════════════════════════════════════════════════
@@ -1308,9 +1172,7 @@ function go(id){
     ranking: () => renderRank('g'),
     configuracoes: () => {},
     import: renderImpList,
-    cadernos: renderCad,
-    conquistas: renderConquistas,
-    bancoexterno: renderBancoExterno
+    cadernos: renderCad
   })[id]?.();
 }
 document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>go(el.dataset.p)));
@@ -2642,7 +2504,7 @@ async function markVidDone(){
   await dbPut('videoaulas',v);
   vids=await dbAll('videoaulas');
   const btn=document.getElementById('vidbtnmark');
-  if(v.done){btn.textContent='↩ Desmarcar concluída';btn.className='vidbtnmark bo';addXP(10);logStudyDay().catch(()=>{});checkBadges().catch(()=>{});}
+  if(v.done){btn.textContent='↩ Desmarcar concluída';btn.className='vidbtnmark bo';addXP(10);}
   else{btn.textContent='✓ Marcar como assistida';btn.className='vidbtnmark bok';}
   renderVA(document.getElementById('va-search').value,vaDF);
 }
@@ -2963,8 +2825,6 @@ async function finishExam(){
   sims=await dbAll('simulados');
   results=await dbAll('resultados');
   await addXP(Math.floor(score/2)+10);
-  await logStudyDay();
-  await checkBadges();
   document.getElementById('exov').classList.remove('active');
   showResult(res);
 }
@@ -3061,14 +2921,9 @@ async function renderFC(){
 }
 
 function fcSource(mode,el){
-  if(mode==='sr'){
-    document.querySelectorAll('.fc-source-tab').forEach(t=>t.classList.remove('on'));
-    if(el)el.classList.add('on');
-    renderFCSR();return;
-  }
   fcSourceMode=mode;
   document.querySelectorAll('.fc-source-tab').forEach(t=>t.classList.remove('on'));
-  if(el)el.classList.add('on');
+  el.classList.add('on');
   renderFC();
 }
 
@@ -3266,24 +3121,6 @@ function downloadFCTemplate(){
 // ══════════════════════════════════════════════════════════
 async function renderDash(){
   sims=await dbAll('simulados');results=await dbAll('resultados');concursos=await dbAll('concursos');
-  // Streak
-  try{
-    const streak=await getStreak();
-    const streakEl=document.getElementById('ds-streak');
-    if(streakEl){
-      if(streak>0){streakEl.style.display='flex';streakEl.innerHTML=`<div class="streak-badge">🔥 ${streak}d</div>`;}
-      else streakEl.style.display='none';
-    }
-    // SR due alert
-    const srCards=await dbAll('fcsr');
-    const due=srCards.filter(c=>!c.dueDate||c.dueDate<=Date.now()).length;
-    const alert=document.getElementById('ds-sr-alert');
-    const cnt=document.getElementById('ds-sr-count');
-    if(alert&&cnt){
-      if(due>0){alert.style.display='flex';cnt.textContent=due;}
-      else alert.style.display='none';
-    }
-  }catch(e){}
   const tot=results.length,totQ=results.reduce((a,r)=>a+r.total,0),totC=results.reduce((a,r)=>a+r.corrects,0),med=totQ?Math.round((totC/totQ)*100):null;
   document.getElementById('ds-sims').textContent=tot;
   document.getElementById('ds-media').textContent=med!==null?med+'%':'—';
@@ -3661,7 +3498,6 @@ async function boot(){
   }
   renderDash();
   await initNotifBadge();
-  await initNewFeatures();
   // Refresh notifications every 5 minutes
   setInterval(initNotifBadge, 5*60*1000);
 }
@@ -3810,536 +3646,6 @@ function stopProgressTracking() {
 }
 
 // closeVid override removed — logic merged into main closeVid function
-
-
-
-// ══════════════════════════════════════════════════════════
-//  SM-2 REPETIÇÃO ESPAÇADA
-// ══════════════════════════════════════════════════════════
-// card SR fields: {id, deckId, pergunta, resposta, dica, categoria,
-//   interval:1, easeFactor:2.5, dueDate:Date.now(), repetitions:0}
-function sm2Update(card, quality){
-  // quality: 0=again,1=hard,2=good,3=easy
-  let {interval=1, easeFactor=2.5, repetitions=0} = card;
-  if(quality===0){repetitions=0;interval=1;}
-  else if(quality===1){interval=Math.max(1,Math.round(interval*1.2));easeFactor=Math.max(1.3,easeFactor-0.15);}
-  else if(quality===2){
-    if(repetitions===0)interval=1;
-    else if(repetitions===1)interval=6;
-    else interval=Math.round(interval*easeFactor);
-    repetitions++;
-  }else{// easy
-    if(repetitions===0)interval=4;
-    else interval=Math.round(interval*easeFactor*1.3);
-    easeFactor=Math.min(3.0,easeFactor+0.1);
-    repetitions++;
-  }
-  const now=Date.now();
-  card.interval=interval;
-  card.easeFactor=easeFactor;
-  card.repetitions=repetitions;
-  card.dueDate=now+(interval*86400000);
-  card.lastReviewed=now;
-  return card;
-}
-function sm2IntervalLabel(card, quality){
-  const temp=sm2Update({...card},quality);
-  const d=temp.interval;
-  if(d===1)return'<10min';
-  if(d<7)return d+'d';
-  if(d<30)return Math.round(d/7)+'sem';
-  return Math.round(d/30)+'mês';
-}
-
-// ── SR Tab in Flashcards ──
-let srQueue=[], srIdx=0, srStats={again:0,hard:0,good:0,easy:0};
-async function renderFCSR(){
-  const decks=await dbAll('flashdecks');
-  const el=document.getElementById('fc-area');
-  // Update SR bar
-  await updateSRBar();
-  if(!decks.length){
-    el.innerHTML=`<div class="empty"><div class="eic">⏱</div><div class="et">Nenhum deck criado</div><div class="es">Crie ou importe um deck de flashcards primeiro</div><button class="btn bp" style="margin-top:11px" onclick="openCreateDeck()">+ Criar Deck</button></div>`;
-    return;
-  }
-  // Load all SR cards due today
-  let srCards=await dbAll('fcsr');
-  const now=Date.now();
-  srQueue=srCards.filter(c=>!c.dueDate||c.dueDate<=now).sort((a,b)=>(a.dueDate||0)-(b.dueDate||0));
-  if(!srQueue.length){
-    const nextDue=srCards.reduce((min,c)=>c.dueDate&&c.dueDate<min?c.dueDate:min,Infinity);
-    const nextStr=isFinite(nextDue)?` Próxima revisão: ${new Date(nextDue).toLocaleDateString('pt-BR')}.`:'';
-    el.innerHTML=`<div class="empty"><div class="eic">✅</div><div class="et">Parabéns! Tudo revisado por hoje</div><div class="es">${nextStr} Continue amanhã para manter a sequência!</div>
-    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
-      <button class="btn bo bsm" onclick="fcSource('deck',document.querySelector('.fc-source-tab:nth-child(2)'))">Ver todos os Decks</button>
-    </div></div>`;
-    return;
-  }
-  srIdx=0;
-  srStats={again:0,hard:0,good:0,easy:0};
-  renderSRCard();
-}
-
-function renderSRCard(){
-  const card=srQueue[srIdx];
-  const tot=srQueue.length, done=srIdx;
-  const pct=tot?Math.round((done/tot)*100):100;
-  const el=document.getElementById('fc-area');
-  el.innerHTML=`
-  <div style="margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
-      <span style="font-size:12px;font-weight:600;color:var(--txt2)">Revisão ${done+1} de ${tot}</span>
-      <div style="display:flex;gap:10px;font-size:11px">
-        <span style="color:var(--err)">🔁 ${srStats.again}</span>
-        <span style="color:var(--warn)">⚠ ${srStats.hard}</span>
-        <span style="color:var(--info)">✔ ${srStats.good}</span>
-        <span style="color:var(--ok)">⭐ ${srStats.easy}</span>
-      </div>
-    </div>
-    <div class="pt"><div class="pf" style="width:${pct}%"></div></div>
-  </div>
-  ${card.categoria?`<div style="margin-bottom:8px"><span class="tag tac">${card.categoria}</span></div>`:''}
-  <div class="fc-w" id="fcw" onclick="document.getElementById('fcw').classList.toggle('flip');document.getElementById('sr-rating').style.display='flex'">
-    <div class="fc-i">
-      <div class="fc-f">
-        <div class="fc-lbl">📖 Pergunta</div>
-        <div class="fc-txt">${card.pergunta||card.enunciado||''}</div>
-        <div class="fc-hint">👆 Clique para revelar a resposta</div>
-      </div>
-      <div class="fc-b">
-        <div class="fc-lbl">💡 Resposta</div>
-        <div class="fc-txt">${card.resposta||card.respostaTexto||''}</div>
-        ${card.dica?`<div style="font-size:12px;color:var(--txt2);margin-top:10px;border-top:1px solid var(--border);padding-top:8px">💡 ${card.dica}</div>`:''}
-      </div>
-    </div>
-  </div>
-  <div id="sr-rating" style="display:none;flex-direction:column;align-items:center;gap:10px;margin-top:16px">
-    <div style="font-size:13px;font-weight:600;color:var(--txt2)">Como foi?</div>
-    <div class="sr-btns">
-      <button class="sr-btn sr-again" onclick="srRate(0)">🔁 De novo<span class="sr-interval">${sm2IntervalLabel(card,0)}</span></button>
-      <button class="sr-btn sr-hard" onclick="srRate(1)">⚠ Difícil<span class="sr-interval">${sm2IntervalLabel(card,1)}</span></button>
-      <button class="sr-btn sr-good" onclick="srRate(2)">✔ Bom<span class="sr-interval">${sm2IntervalLabel(card,2)}</span></button>
-      <button class="sr-btn sr-easy" onclick="srRate(3)">⭐ Fácil<span class="sr-interval">${sm2IntervalLabel(card,3)}</span></button>
-    </div>
-  </div>`;
-}
-
-async function srRate(quality){
-  const card=srQueue[srIdx];
-  sm2Update(card,quality);
-  if(quality===0)srStats.again++;
-  else if(quality===1)srStats.hard++;
-  else if(quality===2)srStats.good++;
-  else srStats.easy++;
-  // Save updated card
-  const existing=await dbGet('fcsr',card.id);
-  if(existing){await dbPut('fcsr',card);}
-  addXP(quality>=2?4:1);
-  await logStudyDay();
-  await checkBadges();
-  srIdx++;
-  if(srIdx>=srQueue.length){
-    // Session complete
-    const el=document.getElementById('fc-area');
-    el.innerHTML=`<div class="empty"><div class="eic">🎉</div>
-      <div class="et">Sessão concluída!</div>
-      <div style="margin:10px auto;display:flex;gap:16px;justify-content:center;font-size:13px">
-        <span style="color:var(--err)">🔁 ${srStats.again} de novo</span>
-        <span style="color:var(--warn)">⚠ ${srStats.hard} difícil</span>
-        <span style="color:var(--info)">✔ ${srStats.good} bom</span>
-        <span style="color:var(--ok)">⭐ ${srStats.easy} fácil</span>
-      </div>
-      <button class="btn bp" style="margin-top:11px" onclick="renderFCSR()">🔄 Revisar Novamente</button></div>`;
-    await updateSRBar();
-    return;
-  }
-  renderSRCard();
-}
-
-async function updateSRBar(){
-  const srCards=await dbAll('fcsr');
-  const now=Date.now();
-  const due=srCards.filter(c=>!c.dueDate||c.dueDate<=now).length;
-  const learned=srCards.filter(c=>c.repetitions&&c.repetitions>0).length;
-  const bar=document.getElementById('fc-sr-bar');
-  if(bar){bar.style.display='flex';}
-  const dc=document.getElementById('fc-due-count');
-  const lc=document.getElementById('fc-learned-count');
-  const tc=document.getElementById('fc-total-count');
-  if(dc)dc.textContent=due;
-  if(lc)lc.textContent=learned;
-  if(tc)tc.textContent=srCards.length;
-}
-
-// ── Create Deck Modal ──
-function openCreateDeck(){
-  showModal('Criar Novo Deck',`
-    <div class="fg"><label class="fl">Nome do Deck *</label><input id="dkname" class="fi" placeholder="Ex: Direito Constitucional"></div>
-    <div class="fg"><label class="fl">Matéria</label><input id="dkmat" class="fi" placeholder="Ex: Direito"></div>
-    <div id="dk-cards-list"></div>
-    <button class="btn bo bsm" onclick="addDeckCardRow()" style="margin-top:8px">+ Adicionar Card</button>
-    <div class="fg" style="margin-top:10px"><label class="fl">Ou cole cards em formato JSON</label>
-      <textarea id="dkjson" class="fi" style="min-height:80px" placeholder='[{"pergunta":"...","resposta":"..."}]'></textarea></div>
-  `,[
-    {l:'Cancelar',c:'bo',fn:()=>{}},
-    {l:'💾 Criar Deck',c:'bp',fn:async()=>{
-      const nome=document.getElementById('dkname').value.trim();
-      const mat=document.getElementById('dkmat').value.trim();
-      if(!nome){toast('Informe o nome do deck','err');return;}
-      let cards=[];
-      // From JSON textarea
-      const jsontxt=document.getElementById('dkjson').value.trim();
-      if(jsontxt){try{cards=JSON.parse(jsontxt);}catch{toast('JSON inválido','err');return;}}
-      // From manual rows
-      const rows=document.querySelectorAll('.dk-row');
-      rows.forEach(row=>{
-        const p=row.querySelector('.dk-pergunta').value.trim();
-        const r=row.querySelector('.dk-resposta').value.trim();
-        if(p&&r)cards.push({pergunta:p,resposta:r});
-      });
-      if(!cards.length){toast('Adicione pelo menos 1 card','err');return;}
-      const deckId=await dbAdd('flashdecks',{titulo:nome,materia:mat,cards,criadoEm:Date.now()});
-      // Also add cards to SR store
-      for(const c of cards){
-        await dbAdd('fcsr',{deckId,pergunta:c.pergunta,resposta:c.resposta,dica:c.dica||'',categoria:c.categoria||mat,interval:1,easeFactor:2.5,repetitions:0,dueDate:Date.now()});
-      }
-      toast(`✅ Deck "${nome}" criado com ${cards.length} cards!`,'ok');
-      fcSource('deck',document.querySelector('.fc-source-tab:nth-child(2)'));
-    }}
-  ]);
-  // Add initial row
-  setTimeout(addDeckCardRow,100);
-}
-
-function addDeckCardRow(){
-  const list=document.getElementById('dk-cards-list');
-  if(!list)return;
-  const div=document.createElement('div');
-  div.className='dk-row';
-  div.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;align-items:start';
-  div.innerHTML=`<textarea class="fi dk-pergunta" placeholder="Pergunta" style="min-height:55px;resize:vertical"></textarea>
-    <textarea class="fi dk-resposta" placeholder="Resposta" style="min-height:55px;resize:vertical"></textarea>`;
-  list.appendChild(div);
-}
-
-// Extend fcSource to handle 'sr'
-const _origFcSource = typeof fcSource!=='undefined'?fcSource:null;
-
-// ══════════════════════════════════════════════════════════
-//  BANCO DE QUESTÕES EXTERNO (gerado localmente com IA)
-// ══════════════════════════════════════════════════════════
-// Banco local com questões geradas a partir dos simulados importados
-// + questões-modelo por disciplina
-
-let bqAllQ=[];
-let bqSavedFilters=JSON.parse(localStorage.getItem('bqFilters')||'[]');
-
-async function renderBancoExterno(){
-  // Load questions from all simulados
-  const allSims=await dbAll('simulados');
-  bqAllQ=[];
-  allSims.forEach(s=>{
-    (s.questoes||[]).forEach((q,i)=>{
-      bqAllQ.push({...q, _simTitle:s.titulo, _simId:s.id, _disc:s.materia||'Geral', _banca:s.banca||'—',_answered:false});
-    });
-  });
-  renderSavedFilterChips();
-  bqFilter();
-}
-
-function bqFilter(){
-  const disc=document.getElementById('bq-disc')?.value||'';
-  const banca=document.getElementById('bq-banca')?.value||'';
-  const nivel=document.getElementById('bq-nivel')?.value||'';
-  const search=document.getElementById('bq-search')?.value?.toLowerCase()||'';
-  let list=bqAllQ;
-  if(disc)list=list.filter(q=>(q._disc||'').toLowerCase().includes(disc.toLowerCase())||
-    (q.disciplina||'').toLowerCase().includes(disc.toLowerCase()));
-  if(banca)list=list.filter(q=>(q._banca||'').toLowerCase().includes(banca.toLowerCase()));
-  if(nivel)list=list.filter(q=>(q.nivel||'')===nivel);
-  if(search)list=list.filter(q=>(q.enunciado||'').toLowerCase().includes(search));
-  const cnt=document.getElementById('bq-count');
-  if(cnt)cnt.textContent=list.length+' questões encontradas';
-  const el=document.getElementById('bq-area');
-  if(!list.length){
-    el.innerHTML=`<div class="empty"><div class="eic">🗄️</div><div class="et">Nenhuma questão encontrada</div><div class="es">Importe simulados para preencher o banco, ou ajuste os filtros</div></div>`;
-    return;
-  }
-  el.innerHTML=list.slice(0,50).map((q,i)=>renderBQCard(q,i)).join('')
-    +(list.length>50?`<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Exibindo 50 de ${list.length} questões. Refine os filtros para ver mais.</div>`:'');
-}
-
-function renderBQCard(q,i){
-  const opcoes=(q.opcoes||[]);
-  const ansIdx=getAnswerIndex(q);
-  const revealed=q._revealed;
-  return`<div class="bq-card" id="bqcard-${i}">
-    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px">
-      <span class="tag tac">${q._disc||q.disciplina||'Geral'}</span>
-      ${q._banca&&q._banca!=='—'?`<span class="tag tinfo">${q._banca}</span>`:''}
-      ${q._simTitle?`<span class="tag tgold" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${q._simTitle}</span>`:''}
-    </div>
-    <div class="bq-enunciado">${q.enunciado}</div>
-    ${opcoes.length?`<div class="bq-opts">${opcoes.map((o,oi)=>{
-      let cls='';
-      if(revealed){cls=oi===ansIdx?'cor':(q._userAns===oi?'wrg':'');}
-      return`<div class="bq-opt ${cls}" onclick="bqPick(${i},${oi})">${o}</div>`;
-    }).join('')}</div>`:''}
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn bo bxs" onclick="bqReveal(${i})">👁 Ver Gabarito</button>
-      <button class="btn bo bxs" onclick="bqAddToCard(${i})">🔖 Flashcard</button>
-    </div>
-    ${revealed&&q.explicacao?`<div style="margin-top:8px;padding:9px 12px;background:var(--ok-lt);border:1px solid var(--ok);border-radius:var(--rsm);font-size:12px;line-height:1.6"><strong>Gabarito: ${getAnswerLetter(q)}</strong><br>${q.explicacao}</div>`:''}
-  </div>`;
-}
-
-function bqPick(i,oi){
-  const q=bqAllQ[i];
-  if(q._revealed)return;
-  q._userAns=oi;
-  q._revealed=true;
-  bqFilter();
-}
-function bqReveal(i){
-  bqAllQ[i]._revealed=true;
-  bqFilter();
-}
-async function bqAddToCard(i){
-  const q=bqAllQ[i];
-  const decks=await dbAll('flashdecks');
-  if(!decks.length){toast('Crie um deck primeiro para salvar o flashcard','err');return;}
-  showModal('Salvar como Flashcard',`
-    <div style="font-size:13px;color:var(--txt2);margin-bottom:12px;background:var(--bg);padding:9px;border-radius:8px">${(q.enunciado||'').substring(0,120)}…</div>
-    <div class="fg"><label class="fl">Deck de destino</label>
-      <select id="bq-deck-sel" class="fi">${decks.map(d=>`<option value="${d.id}">${d.titulo}</option>`).join('')}</select>
-    </div>
-  `,[
-    {l:'Cancelar',c:'bo',fn:()=>{}},
-    {l:'💾 Salvar',c:'bp',fn:async()=>{
-      const deckId=+document.getElementById('bq-deck-sel').value;
-      const deck=await dbGet('flashdecks',deckId);
-      const card={pergunta:q.enunciado,resposta:getAnswerLetter(q)+(q.explicacao?' — '+q.explicacao.substring(0,100):''),categoria:q._disc||'Geral'};
-      deck.cards.push(card);
-      await dbPut('flashdecks',deck);
-      // Add to SR
-      await dbAdd('fcsr',{deckId,pergunta:card.pergunta,resposta:card.resposta,categoria:card.categoria,interval:1,easeFactor:2.5,repetitions:0,dueDate:Date.now()});
-      toast('✅ Salvo no deck!','ok');
-    }}
-  ]);
-}
-
-function bqCreateSim(){
-  const disc=document.getElementById('bq-disc')?.value||'';
-  const banca=document.getElementById('bq-banca')?.value||'';
-  let list=bqAllQ;
-  if(disc)list=list.filter(q=>(q._disc||'').toLowerCase().includes(disc.toLowerCase()));
-  if(banca)list=list.filter(q=>(q._banca||'').toLowerCase().includes(banca.toLowerCase()));
-  if(!list.length){toast('Nenhuma questão com estes filtros','err');return;}
-  showModal('Criar Simulado Personalizado',`
-    <div style="font-size:13px;color:var(--txt2);margin-bottom:12px">${list.length} questões disponíveis com os filtros atuais.</div>
-    <div class="fg"><label class="fl">Título do simulado</label><input id="bqsim-title" class="fi" value="Simulado ${disc||'Geral'} — ${new Date().toLocaleDateString('pt-BR')}"></div>
-    <div class="fg"><label class="fl">Número de questões (máx: ${Math.min(60,list.length)})</label>
-      <input id="bqsim-n" class="fi" type="number" min="5" max="${Math.min(60,list.length)}" value="${Math.min(20,list.length)}"></div>
-    <div class="fg"><label class="fl">Tempo (minutos)</label><input id="bqsim-tempo" class="fi" type="number" value="60"></div>
-  `,[
-    {l:'Cancelar',c:'bo',fn:()=>{}},
-    {l:'📋 Criar',c:'bp',fn:async()=>{
-      const titulo=document.getElementById('bqsim-title').value.trim()||'Simulado Personalizado';
-      const n=Math.min(+document.getElementById('bqsim-n').value||20,list.length);
-      const tempo=+document.getElementById('bqsim-tempo').value||60;
-      // Shuffle and pick
-      const shuffled=[...list].sort(()=>Math.random()-.5).slice(0,n);
-      const questoes=shuffled.map((q,i)=>normalizeQuestion({...q,numero:i+1},i));
-      const sim={titulo,materia:disc||'Geral',banca:banca||'Misto',ano:new Date().getFullYear(),tempo,questoes,plays:0,bestScore:null,importedAt:Date.now()};
-      await dbAdd('simulados',sim);
-      sims=await dbAll('simulados');
-      toast(`✅ Simulado "${titulo}" criado com ${n} questões!`,'ok');
-      go('simulados');
-    }}
-  ]);
-}
-
-function bqSaveFilter(){
-  const disc=document.getElementById('bq-disc')?.value||'';
-  const banca=document.getElementById('bq-banca')?.value||'';
-  const nivel=document.getElementById('bq-nivel')?.value||'';
-  const search=document.getElementById('bq-search')?.value||'';
-  if(!disc&&!banca&&!nivel&&!search){toast('Configure ao menos um filtro para salvar','err');return;}
-  const label=[disc,banca,nivel,search].filter(Boolean).join(' · ');
-  bqSavedFilters.push({disc,banca,nivel,search,label});
-  localStorage.setItem('bqFilters',JSON.stringify(bqSavedFilters));
-  renderSavedFilterChips();
-  toast('🔖 Filtro salvo!','ok');
-}
-
-function renderSavedFilterChips(){
-  const el=document.getElementById('bq-saved-filters');
-  if(!el)return;
-  el.innerHTML=bqSavedFilters.map((f,i)=>`<div class="chip" onclick="bqApplyFilter(${i})" style="display:inline-flex;align-items:center;gap:5px">${f.label}<span onclick="event.stopPropagation();bqDeleteFilter(${i})" style="opacity:.6;font-size:10px;margin-left:3px">✕</span></div>`).join('');
-}
-function bqApplyFilter(i){
-  const f=bqSavedFilters[i];
-  document.getElementById('bq-disc').value=f.disc;
-  document.getElementById('bq-banca').value=f.banca;
-  document.getElementById('bq-nivel').value=f.nivel;
-  document.getElementById('bq-search').value=f.search;
-  bqFilter();
-  toast('Filtro aplicado!','ok');
-}
-function bqDeleteFilter(i){
-  bqSavedFilters.splice(i,1);
-  localStorage.setItem('bqFilters',JSON.stringify(bqSavedFilters));
-  renderSavedFilterChips();
-}
-function bqLoadFilter(){
-  if(!bqSavedFilters.length){toast('Nenhum filtro salvo','err');return;}
-  toast('Clique em um chip de filtro abaixo para aplicar','info');
-}
-
-// ══════════════════════════════════════════════════════════
-//  BADGES / CONQUISTAS
-// ══════════════════════════════════════════════════════════
-const BADGE_DEFS=[
-  {id:'primeiro_sim',ic:'🎯',nome:'Primeiro Simulado',desc:'Complete seu primeiro simulado',check:async()=>{const r=await dbAll('resultados');return r.length>=1;}},
-  {id:'cinco_sims',ic:'📋',nome:'Maratonista',desc:'Complete 5 simulados',check:async()=>{const r=await dbAll('resultados');return r.length>=5;}},
-  {id:'nota_100',ic:'💯',nome:'Perfeição',desc:'Acerte 100% em um simulado',check:async()=>{const r=await dbAll('resultados');return r.some(x=>x.score>=100);}},
-  {id:'nota_70',ic:'🏅',nome:'Aprovado',desc:'Tire 70% ou mais em um simulado',check:async()=>{const r=await dbAll('resultados');return r.some(x=>x.score>=70);}},
-  {id:'streak_3',ic:'🔥',nome:'Sequência de Fogo',desc:'Estude 3 dias seguidos',check:async()=>{return await getStreak()>=3;}},
-  {id:'streak_7',ic:'🔥🔥',nome:'Semana Épica',desc:'Estude 7 dias seguidos',check:async()=>{return await getStreak()>=7;}},
-  {id:'streak_30',ic:'🔥🔥🔥',nome:'Imparável',desc:'Estude 30 dias seguidos',check:async()=>{return await getStreak()>=30;}},
-  {id:'10_flashcards',ic:'🎴',nome:'Decoreba',desc:'Revise 10 flashcards por SR',check:async()=>{const c=await dbAll('fcsr');return c.filter(x=>x.repetitions&&x.repetitions>0).length>=10;}},
-  {id:'50_flashcards',ic:'🧠',nome:'Memória de Ferro',desc:'Revise 50 flashcards por SR',check:async()=>{const c=await dbAll('fcsr');return c.filter(x=>x.repetitions&&x.repetitions>0).length>=50;}},
-  {id:'primeiro_concurso',ic:'🎯',nome:'Na Mira',desc:'Cadastre seu primeiro concurso',check:async()=>{const c=await dbAll('concursos');return c.length>=1;}},
-  {id:'10_videoaulas',ic:'🎬',nome:'Cinéfilo',desc:'Assista 10 videoaulas',check:async()=>{const v=await dbAll('videoaulas');return v.filter(x=>x.done).length>=10;}},
-  {id:'nivel_5',ic:'⭐',nome:'Veterano',desc:'Alcance o nível 5',check:async()=>{const u=await dbGet('user','profile');return (u?u.level:user.level)>=5;}},
-  {id:'nivel_10',ic:'💎',nome:'Elite',desc:'Alcance o nível 10',check:async()=>{const u=await dbGet('user','profile');return (u?u.level:user.level)>=10;}},
-  {id:'banco_100',ic:'🗄️',nome:'Escavador',desc:'Responda 100 questões do banco',check:async()=>{const n=+localStorage.getItem('bq_answered')||0;return n>=100;}},
-];
-
-async function checkBadges(){
-  let earned=JSON.parse(localStorage.getItem('earnedBadges')||'[]');
-  let newlyEarned=[];
-  for(const b of BADGE_DEFS){
-    if(!earned.includes(b.id)){
-      try{
-        const ok=await b.check();
-        if(ok){earned.push(b.id);newlyEarned.push(b);}
-      }catch(e){}
-    }
-  }
-  if(newlyEarned.length){
-    localStorage.setItem('earnedBadges',JSON.stringify(earned));
-    newlyEarned.forEach(b=>{
-      toast(`🎖️ Conquista desbloqueada: ${b.nome}!`,'ok');
-      addXP(50);
-    });
-  }
-}
-
-async function renderConquistas(){
-  const earned=new Set(JSON.parse(localStorage.getItem('earnedBadges')||'[]'));
-  const streak=await getStreak();
-  // Streak display
-  document.getElementById('streak-display').innerHTML=`<div class="streak-badge">🔥 ${streak} dia${streak!==1?'s':''} seguido${streak!==1?'s':''}</div>`;
-  const el=document.getElementById('badges-area');
-  // Heatmap
-  const heatmapHTML=await renderHeatmap();
-  const earnedBadges=BADGE_DEFS.filter(b=>earned.has(b.id));
-  const lockedBadges=BADGE_DEFS.filter(b=>!earned.has(b.id));
-  el.innerHTML=`
-    <div class="card" style="margin-bottom:14px">
-      <div style="font-family:'Sora',sans-serif;font-weight:700;margin-bottom:12px">📅 Mapa de Estudos — Últimos 52 semanas</div>
-      ${heatmapHTML}
-      <div style="margin-top:8px;font-size:11px;color:var(--muted)">Cada quadrado = 1 dia. Mais escuro = mais atividade.</div>
-    </div>
-    <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:15px;margin-bottom:10px">🏆 Conquistas (${earnedBadges.length}/${BADGE_DEFS.length})</div>
-    ${earnedBadges.length?`<div class="badge-grid">${earnedBadges.map(b=>`<div class="badge-card earned"><div class="badge-ic">${b.ic}</div><div class="badge-name">${b.nome}</div><div class="badge-desc">${b.desc}</div><div class="badge-earned-tag">✅ Desbloqueado</div></div>`).join('')}</div>`:''}
-    <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px;color:var(--muted)">🔒 A desbloquear</div>
-    <div class="badge-grid">${lockedBadges.map(b=>`<div class="badge-card locked"><div class="badge-ic">${b.ic}</div><div class="badge-name">${b.nome}</div><div class="badge-desc">${b.desc}</div></div>`).join('')}</div>
-  `;
-}
-
-// ── Study Day Logging ──
-async function logStudyDay(){
-  const today2=new Date().toISOString().slice(0,10);
-  const logs=await dbAll('studylog');
-  if(!logs.find(l=>l.date===today2)){await dbAdd('studylog',{date:today2,ts:Date.now()});}
-}
-async function getStreak(){
-  const logs=await dbAll('studylog');
-  const days=new Set(logs.map(l=>l.date));
-  let streak=0,d=new Date();
-  while(true){
-    const key=d.toISOString().slice(0,10);
-    if(days.has(key)){streak++;d.setDate(d.getDate()-1);}
-    else break;
-  }
-  return streak;
-}
-
-async function renderHeatmap(){
-  const logs=await dbAll('studylog');
-  const freq={};
-  logs.forEach(l=>{freq[l.date]=(freq[l.date]||0)+1;});
-  const today3=new Date();
-  const start=new Date(today3);
-  start.setDate(start.getDate()-364);
-  // Build grid week by week
-  let html='<div class="heatmap-wrap"><div class="heatmap-grid">';
-  let cur=new Date(start);
-  // align to Sunday
-  while(cur.getDay()!==0)cur.setDate(cur.getDate()-1);
-  while(cur<=today3){
-    html+='<div class="heatmap-col">';
-    for(let d2=0;d2<7;d2++){
-      if(cur>today3){html+='<div class="hm-cell"></div>';}
-      else{
-        const key=cur.toISOString().slice(0,10);
-        const cnt=freq[key]||0;
-        const lvl=cnt===0?0:cnt<=2?1:cnt<=5?2:cnt<=10?3:4;
-        html+=`<div class="hm-cell hm-${lvl}" title="${key}: ${cnt} atividade${cnt!==1?'s':''}"></div>`;
-      }
-      cur.setDate(cur.getDate()+1);
-    }
-    html+='</div>';
-  }
-  html+='</div></div>';
-  return html;
-}
-
-// Hook study logging to exam finish and video watch
-const _origFinishExam=window.finishExam;
-
-// ══════════════════════════════════════════════════════════
-//  PATCH: extend fcSource to handle 'sr'
-// ══════════════════════════════════════════════════════════
-// Override fcSource to add SR tab support
-let fcSourceOriginal=null;
-document.addEventListener('DOMContentLoaded',()=>{
-  if(typeof fcSource==='function')fcSourceOriginal=fcSource;
-});
-
-// fcSource is defined above
-
-// Patch renderCC / finishExam / markVidDone to log study
-const origMarkVidDone=window.markVidDone;
-
-// ══════════════════════════════════════════════════════════
-//  INIT PATCHES
-// ══════════════════════════════════════════════════════════
-async function initNewFeatures(){
-  // Update SR bar when on flashcards
-  await updateSRBar().catch(()=>{});
-  // Check badges on load
-  await checkBadges().catch(()=>{});
-  // Log today if any activity (from results)
-  const results2=await dbAll('resultados').catch(()=>[]);
-  if(results2.length>0){
-    const todayStr=new Date().toISOString().slice(0,10);
-    const last=results2[results2.length-1];
-    if(last&&new Date(last.date).toISOString().slice(0,10)===todayStr)await logStudyDay().catch(()=>{});
-  }
-}
 
 
 window.addEventListener('beforeunload', (e) => {
